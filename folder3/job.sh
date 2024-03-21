@@ -1,0 +1,1 @@
+/Users/jus/bin/z.sh
