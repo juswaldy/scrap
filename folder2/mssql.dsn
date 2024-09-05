@@ -1,0 +1,47 @@
+[db6]
+Driver      = ODBC Driver 17 for SQL Server
+Description = Connect to db6 instance
+Trace       = No
+Server      = db6.dev.twu.ca,1433
+
+[fast]
+Driver      = ODBC Driver 17 for SQL Server
+Description = Connect to fast instance
+Trace       = No
+Server      = fast.twu.ca,1433
+
+[testaqdb]
+Driver      = ODBC Driver 17 for SQL Server
+Description = Connect to db1 instance
+Trace       = No
+Server      = test-aqdb.twu.ca,1433
+
+[prodaqdb]
+Driver      = ODBC Driver 17 for SQL Server
+Description = Connect to db2 instance
+Trace       = No
+Server      = prod-aqdb.twu.ca,1433
+
+[jenzabarsrvtest]
+Driver      = ODBC Driver 17 for SQL Server
+Description = Connect to jenzabarsrvtest instance
+Trace       = No
+Server      = jenzabarsrvtest.twu.ca,1433
+
+[jenzabarsrv]
+Driver      = ODBC Driver 17 for SQL Server
+Description = Connect to jenzabarsrv instance
+Trace       = No
+Server      = jenzabarsrv.twu.ca,1433
+
+[hub]
+Driver      = ODBC Driver 17 for SQL Server
+Description = Connect to data hub instance
+Trace       = No
+Server      = mds-dev.twu.ca,1433
+
+[prodfrdb]
+Driver      = ODBC Driver 17 for SQL Server
+Description = Connect to data hub instance
+Trace       = No
+Server      = prod-frdb.twu.ca,1433

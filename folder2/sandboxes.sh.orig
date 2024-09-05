@@ -1,0 +1,73 @@
+#!/usr/bin/bash
+
+sandboxroot=/tmp
+sandboxhome=$sandboxroot/sandboxes
+configsroot=$sandboxroot/sandbox-configs
+scriptsroot=$sandboxroot/sandbox-scripts
+mkdir -p $configsroot
+mkdir -p $scriptsroot
+
+# Copy sandboxes folder to $sandboxroot and go there to process it
+echo "# Copy sandboxes folder to $sandboxroot and go there to process it"
+cp -rp /home/tomcat/CloverDX/sandboxes $sandboxroot
+
+# Remove Prod/PROD from the names
+echo "# Remove Prod/PROD from the names"
+for s in ActiveNet AdAstraSyncCloud ADP ADPtoTD BPR-RCE ChqRec CoursesSync EFT-RCE ERxSync GLSync PAD-EFT RCE-GLI SalesforceSync Vena AppArmorSync Bookware Interfolio SymphonySync SchoolDataSync idProducerSync IT Orbis DigitalRecords; do
+    echo "mv $sandboxhome/${s}_[Pp][Rr][Oo][Dd] $sandboxhome/$s"
+    mv $sandboxhome/${s}_[Pp][Rr][Oo][Dd] $sandboxhome/$s
+done
+
+# Copy configs to the $configsroot folder and remove them from the sandboxes
+echo "# Copy configs to the $configsroot folder and remove them from the sandboxes"
+for s in ActiveNet AdAstraSyncCloud ADP ADPtoTD BPR-RCE ChqRec CoursesSync EFT-RCE ERxSync GLSync PAD-EFT RCE-GLI SalesforceSync Vena AppArmorSync Bookware Interfolio SymphonySync SchoolDataSync idProducerSync IT Orbis DigitalRecords; do
+    cp -rp $sandboxhome/$s/conn/* $configsroot/$s
+    rm $sandboxhome/$s/conn/*
+done
+
+# Move external scripts to the $scriptsroot folder
+echo "# Move external scripts to the $scriptsroot folder"
+for d in Shared TWU; do
+    echo "mv $sandboxhome/$d $scriptsroot"
+    mv $sandboxhome/$d $scriptsroot
+done
+for s in ActiveNet AdAstraSyncCloud ADP ADPtoTD BPR-RCE CoursesSync EFT-RCE ERxSync GLSync PAD-EFT RCE-GLI SalesforceSync Vena AppArmorSync Bookware Interfolio SymphonySync SchoolDataSync idProducerSync IT Orbis DigitalRecords; do
+    echo "mv $sandboxhome/$s/script $scriptsroot/$s"
+    mv $sandboxhome/$s/script $scriptsroot/$s
+done
+s=ChqRec
+echo "mv $sandboxhome/$s/scripts $scriptsroot/$s"
+mv $sandboxhome/$s/scripts $scriptsroot/$s
+
+# Move external script configs to the scripts folder
+echo "# Move external script configs to the scripts folder"
+for s in ActiveNet AdAstraSyncCloud ADP ADPtoTD BPR-RCE ChqRec CoursesSync EFT-RCE ERxSync GLSync PAD-EFT RCE-GLI SalesforceSync Vena AppArmorSync Bookware Interfolio SymphonySync SchoolDataSync idProducerSync IT Orbis DigitalRecords; do
+    echo "mv $sandboxhome/$s/conn/*.rb $scriptsroot/$s"
+    mv $sandboxhome/$s/conn/*.rb $scriptsroot/$s
+done
+
+# Remove all files from sandbox data folders
+echo "# Remove all files from sandbox data folders"
+for s in ActiveNet AdAstraSyncCloud ADP ADPtoTD BPR-RCE ChqRec CoursesSync EFT-RCE ERxSync GLSync PAD-EFT RCE-GLI SalesforceSync Vena AppArmorSync Bookware Interfolio SymphonySync SchoolDataSync idProducerSync IT Orbis DigitalRecords; do
+    echo "find $sandboxhome/$s/data-* -type f -delete"
+    find $sandboxhome/$s/data-* -type f -delete
+done
+
+# Remove compiled python files and pycache folders
+echo "# Remove compiled python files and pycache folders"
+for s in ActiveNet AdAstraSyncCloud ADP ADPtoTD BPR-RCE ChqRec CoursesSync EFT-RCE ERxSync GLSync PAD-EFT RCE-GLI SalesforceSync Vena AppArmorSync Bookware Interfolio SymphonySync SchoolDataSync idProducerSync IT Orbis DigitalRecords; do
+    echo "find $sandboxhome/$s -type d -name __pycache__ -exec rm -rf {} \;"
+    find $sandboxhome/$s -type d -name __pycache__ -exec rm -rf {} \;
+    find $sandboxhome -type f -name '*.pyc' -delete
+done
+
+# Remove Salesforce wsdls and backup folder
+echo "# Remove ERx wsdls and backup folder"
+rm -f $sandboxhome/ERxSync/meta/enterprise.wsdl.*
+rm -f $sandboxhome/ERxSync/backup
+rm -f $sandboxhome/SalesforceSync/meta/enterprise.wsdl.*
+rm -f $sandboxhome/SalesforceSync/meta/metadata.wsdl
+rm -f $sandboxhome/SalesforceSync/meta/partner.wsdl
+rm -f $sandboxhome/SalesforceSync/meta/tooling.wsdl
+
+# Chmod for all graphs and subgraphs.
