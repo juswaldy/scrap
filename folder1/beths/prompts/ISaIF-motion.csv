@@ -1,0 +1,102 @@
+mode,parameter,frame,value
+2D,Zoom,0,0.995
+2D,Zoom,120,0.9
+2D,Zoom,150,0.93
+2D,Zoom,180,0.99
+2D,Zoom,200,0.995
+2D,Zoom,250,1.005
+2D,Zoom,400,1.01
+2D,Zoom,450,1.03
+2D,Zoom,500,1.1
+2D,Zoom,550,1.03
+2D,Zoom,600,1.005
+2D,Zoom,700,0.995
+2D,Angle,0,0
+2D,Angle,440,0
+2D,Angle,450,0.5
+2D,Angle,480,0
+2D,Transform Center X,0,0
+2D,Transform Center X,60,-0.5
+2D,Transform Center X,120,0
+2D,Transform Center X,180,0.3
+2D,Transform Center X,230,0.4
+2D,Transform Center X,300,0.7
+2D,Transform Center X,350,0.5
+2D,Transform Center X,400,0
+2D,Transform Center X,500,0.2
+2D,Transform Center X,600,-0.2
+2D,Transform Center X,700,-0.3
+2D,Transform Center X,750,0.1
+2D,Transform Center Y,0,0
+2D,Transform Center Y,30,0.3
+2D,Transform Center Y,60,0.5
+2D,Transform Center Y,120,0
+2D,Transform Center Y,180,0.2
+2D,Transform Center Y,200,0
+2D,Transform Center Y,220,-0.3
+2D,Transform Center Y,300,0.1
+2D,Transform Center Y,400,0.2
+2D,Transform Center Y,500,0.3
+2D,Transform Center Y,600,0.4
+2D,Transform Center Y,700,0.1
+2D,Translation X,0,0
+2D,Translation X,290,0
+2D,Translation X,300,2
+2D,Translation X,350,0
+2D,Translation X,550,0
+2D,Translation X,600,-5
+2D,Translation X,650,0
+2D,Translation Y,0,0
+2D,Translation Y,190,0
+2D,Translation Y,200,-3
+2D,Translation Y,250,0
+2D,Translation Y,320,0
+2D,Translation Y,330,-2
+2D,Translation Y,370,0
+2D,Translation Y,570,0
+2D,Translation Y,580,2
+2D,Translation Y,610,0
+2D,Translation Y,630,4
+2D,Translation Y,680,0
+3D,Translation X,0,0
+3D,Translation X,290,0
+3D,Translation X,300,2
+3D,Translation X,350,0
+3D,Translation X,550,0
+3D,Translation X,600,-5
+3D,Translation X,650,0
+3D,Translation Y,0,0
+3D,Translation Y,190,0
+3D,Translation Y,200,-3
+3D,Translation Y,250,0
+3D,Translation Y,320,0
+3D,Translation Y,330,-2
+3D,Translation Y,370,0
+3D,Translation Y,570,0
+3D,Translation Y,580,2
+3D,Translation Y,610,0
+3D,Translation Y,630,4
+3D,Translation Y,680,0
+3D,Translation Z,0,1.75
+3D,Rotation 3D X,0,0
+3D,Rotation 3D X,200,1
+3D,Rotation 3D X,330,0
+3D,Rotation 3D X,500,-1
+3D,Rotation 3D X,550,0
+3D,Rotation 3D X,700,-1
+3D,Rotation 3D X,800,0
+3D,Rotation 3D Y,0,0
+3D,Rotation 3D Y,200,1
+3D,Rotation 3D Y,250,0
+3D,Rotation 3D Y,350,1
+3D,Rotation 3D Y,400,0
+3D,Rotation 3D Y,490,-1
+3D,Rotation 3D Y,525,0
+3D,Rotation 3D Y,600,-3
+3D,Rotation 3D Y,630,0
+3D,Rotation 3D Y,650,-3
+3D,Rotation 3D Y,660,-5
+3D,Rotation 3D Y,680,0
+3D,Rotation 3D Y,770,1
+3D,Rotation 3D Y,810,0
+3D,Rotation 3D Z,0,0
