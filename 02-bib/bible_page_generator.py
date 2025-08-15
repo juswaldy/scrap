@@ -133,6 +133,47 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
+# When loading XML from a remote URL we use urllib to fetch the
+# content.  urllib is part of the Python standard library so it
+# introduces no additional dependencies.  We avoid using third‑party
+# libraries such as ``requests`` to keep the module lightweight and
+# portable.
+from urllib.request import urlopen
+
+def _resolve_remote_url(url: str) -> str:
+    """Normalize repository URLs to their raw equivalents.
+
+    When users supply a GitHub web URL such as
+    ``https://github.com/user/repo/blob/branch/path/to/file.xml`` it
+    actually points to an HTML page rather than the raw XML content.
+    This helper rewrites such URLs to the corresponding
+    ``raw.githubusercontent.com`` form so that the underlying XML can
+    be downloaded and parsed correctly.  If the URL does not match
+    this pattern it is returned unchanged.
+
+    Parameters
+    ----------
+    url : str
+        The original URL provided by the caller.
+
+    Returns
+    -------
+    str
+        A URL pointing directly to the raw file contents.
+    """
+    # Handle GitHub blob URLs
+    if url.startswith(('https://github.com/', 'http://github.com/')) and '/blob/' in url:
+        # Strip the base and replace the blob segment
+        # Example: https://github.com/user/repo/blob/branch/file ->
+        #          https://raw.githubusercontent.com/user/repo/branch/file
+        prefix_removed = url.replace('https://github.com/', '', 1).replace('http://github.com/', '', 1)
+        parts = prefix_removed.split('/blob/')
+        if len(parts) == 2:
+            owner_repo, path = parts
+            # Prepend raw domain and join owner/repo and path without the blob segment
+            return f'https://raw.githubusercontent.com/{owner_repo}/{path}'
+    return url
+
 
 @dataclass
 class Word:
@@ -203,19 +244,39 @@ class HebrewBibleParser:
     CHAPTER_TAG = '{http://www.bibletechnologies.net/2003/OSIS/namespace}chapter'
 
     def load_book(self, xml_path: str) -> Dict[int, Dict[int, Verse]]:
-        """Load a single book from a WLC/BHS OSIS XML file.
+        """Load a single book from a WLC/BHS OSIS XML file or URL.
+
+        This method will transparently load the XML either from a
+        local file system path or from a remote URL.  If ``xml_path``
+        begins with ``http://`` or ``https://``, the content is
+        downloaded using ``urllib.request.urlopen`` before being
+        parsed.  Otherwise the file is read directly from the local
+        filesystem.
 
         Parameters
         ----------
         xml_path : str
-            Path to the OSIS XML file (e.g. ``Prov.xml``).
+            Path or URL to the OSIS XML file (e.g. ``Prov.xml`` or
+            ``https://raw.githubusercontent.com/openscriptures/morphhb/master/wlc/Prov.xml``).
 
         Returns
         -------
         Dict[int, Dict[int, Verse]]
             A nested dictionary keyed by chapter and verse number.
         """
-        tree = ET.parse(xml_path)
+        # Determine whether the input is a URL or a local path
+        is_url = xml_path.startswith(('http://', 'https://'))
+        if is_url:
+            # Resolve GitHub blob URLs to raw content
+            remote_url = _resolve_remote_url(xml_path)
+            # Fetch remote XML content
+            with urlopen(remote_url) as response:
+                data = response.read()
+            # Parse from string: wrap in ElementTree for consistency
+            tree = ET.ElementTree(ET.fromstring(data))
+        else:
+            # Parse local file
+            tree = ET.parse(xml_path)
         root = tree.getroot()
         chapters: Dict[int, Dict[int, Verse]] = {}
         # Find all chapters
@@ -223,7 +284,11 @@ class HebrewBibleParser:
             # Extract numeric chapter id from osisID attribute
             osis_id = chap.get('osisID') or ''
             # osisID looks like "Prov.1"; take the part after the dot
-            chap_num = int(osis_id.split('.')[-1])
+            try:
+                chap_num = int(osis_id.split('.')[-1])
+            except ValueError:
+                # Skip chapters with non‑numeric identifiers
+                continue
             verses: Dict[int, Verse] = {}
             # Iterate through verse elements
             for verse_el in chap.iter(self.VERSE_TAG):
@@ -278,12 +343,25 @@ class HebrewStrongLexicon:
     def load(self, xml_path: str) -> None:
         """Load and parse the Strong’s dictionary into memory.
 
+        This method accepts either a local file path or a URL.  When
+        ``xml_path`` begins with ``http://`` or ``https://`` the
+        dictionary is downloaded via ``urllib.request.urlopen`` and
+        parsed from memory.  Otherwise the file is read from the
+        local filesystem.
+
         Parameters
         ----------
         xml_path : str
-            Path to the ``HebrewStrong.xml`` file.
+            Path or URL to the ``HebrewStrong.xml`` file.
         """
-        tree = ET.parse(xml_path)
+        is_url = xml_path.startswith(('http://', 'https://'))
+        if is_url:
+            remote_url = _resolve_remote_url(xml_path)
+            with urlopen(remote_url) as response:
+                data = response.read()
+            tree = ET.ElementTree(ET.fromstring(data))
+        else:
+            tree = ET.parse(xml_path)
         root = tree.getroot()
         for entry in root.iter(self.ENTRY_TAG):
             entry_id = entry.get('id') or ''
