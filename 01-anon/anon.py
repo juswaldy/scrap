@@ -38,6 +38,157 @@ from typing import Dict, List, Optional, Callable
 
 import pandas as pd
 
+# ---------------------------------------------------------------------------
+# Data pools used for pseudonymisation
+#
+# These lists provide a large collection of common first and last names,
+# email domains, street names, city names, state/province names and countries.
+# They are defined at the module level so that all methods within
+# ``TokenGenerator`` can reference the same consistent pools.  Expanding
+# these lists improves variety in pseudonymised data and helps avoid
+# repetitions when anonymising large datasets.
+
+# A pool of 150 common first names drawn from historical popularity lists.
+FIRST_NAME_POOL = [
+    'James','Mary','John','Patricia','Robert','Jennifer','Michael','Linda',
+    'William','Elizabeth','David','Barbara','Richard','Susan','Joseph','Jessica',
+    'Thomas','Sarah','Charles','Karen','Christopher','Nancy','Daniel','Lisa',
+    'Matthew','Margaret','Anthony','Betty','Donald','Sandra','Mark','Ashley',
+    'Paul','Dorothy','Steven','Kimberly','Andrew','Emily','Kenneth','Donna',
+    'George','Michelle','Joshua','Carol','Kevin','Amanda','Brian','Melissa',
+    'Edward','Deborah','Ronald','Stephanie','Timothy','Rebecca','Jason','Laura',
+    'Jeffrey','Sharon','Ryan','Cynthia','Jacob','Kathleen','Gary','Amy',
+    'Nicholas','Shirley','Eric','Angela','Stephen','Helen','Jonathan','Anna',
+    'Larry','Brenda','Justin','Pamela','Scott','Nicole','Brandon','Ruth',
+    'Benjamin','Katherine','Samuel','Samantha','Gregory','Christine','Alexander',
+    'Carolyn','Patrick','Janet','Dennis','Catherine','Jerry','Maria','Tyler',
+    'Heather','Aaron','Diane','Henry','Julie','Douglas','Joyce','Peter',
+    'Victoria','Jose','Kelly','Adam','Christina','Arthur','Lauren','Zachary',
+    'Joan','Walter','Olivia','Lawrence','Judith','Dylan','Megan','Carl',
+    'Andrea','Alan','Cheryl','Keith','Jacqueline','Roger','Kathryn','Gerald',
+    'Hannah','Ethan','Gloria','Christian','Teresa','Terry','Sara','Austin',
+    'Janice','Noah','Jean','Jesse','Alice','Harold','Madison','Bryan',
+    'Doris','Wayne','Abigail','Billy','Julia','Jordan','Randy','Rose',
+    'Sean','Danielle','Johnny','Grace','Roy','Victoria','Philip','Frances',
+    'Mason','Evelyn','Caleb','Kaitlyn','Luke','Charlotte','Curtis','Lori',
+    'Joel','Marilyn','Micah','Judy','Martin','Ruby','Lee','Emma','Howard',
+    'Sheila','Frank','Tracy','Nathan','Erin'
+]
+
+# A pool of more than 150 common surnames, spanning multiple cultures.  These
+# names are drawn from census data and include common Asian and Hispanic
+# surnames to improve diversity in the pseudonymised output.
+LAST_NAME_POOL = [
+    'Smith','Johnson','Williams','Brown','Jones','Garcia','Miller','Davis',
+    'Rodriguez','Martinez','Hernandez','Lopez','Gonzalez','Wilson','Anderson',
+    'Thomas','Taylor','Moore','Jackson','Martin','Lee','Perez','Thompson',
+    'White','Harris','Sanchez','Clark','Ramirez','Lewis','Robinson','Walker',
+    'Young','Allen','King','Wright','Scott','Torres','Nguyen','Hill','Flores',
+    'Green','Adams','Nelson','Baker','Hall','Rivera','Campbell','Mitchell',
+    'Carter','Roberts','Gomez','Phillips','Evans','Turner','Diaz','Parker',
+    'Cruz','Edwards','Collins','Reyes','Stewart','Morris','Morales','Murphy',
+    'Cook','Rogers','Gutierrez','Ortiz','Morgan','Cooper','Peterson','Bailey',
+    'Reed','Kelly','Howard','Ramos','Kim','Cox','Ward','Richardson','Watson',
+    'Brooks','Chavez','Wood','James','Bennett','Gray','Mendoza','Ruiz',
+    'Hughes','Price','Alvarez','Castillo','Sanders','Patel','Myers','Long',
+    'Ross','Foster','Jimenez','Powell','Jenkins','Perry','Russell','Sullivan',
+    'Bell','Coleman','Butler','Henderson','Barnes','Gonzales','Fisher',
+    'Vasquez','Simmons','Romero','Jordan','Patterson','Alexander','Hamilton',
+    'Graham','Reynolds','Griffin','Wallace','Moreno','West','Cole','Hayes',
+    'Bryant','Herrera','Gibson','Ellis','Tran','Medina','Aguilar','Stevens',
+    'Murray','Ford','Castro','Marshall','Owens','Harrison','Fernandez',
+    'Mcdonald','Woods','Washington','Kennedy','Wells','Vargas','Henry','Chen',
+    'Freeman','Webb','Tucker','Guzman','Burns','Crawford','Olson','Simpson',
+    'Porter','Hunter','Gordon','Mendez','Silva','Shaw','Snyder','Mason','Dixon',
+    'Munoz','Hunt','Hicks','Holmes','Beck','Pierce','Dunn','Black','Robertson',
+    'Faulkner','Rupert','Maxwell','Underwood','Ray','Thornton','Harrington',
+    'Miles','Peters','Lawson','Greene','Fletcher','Love','Carr','Harvey',
+    'Collier','Patton','Harmon','Yu','Huang','Ng','Goh','Tan','Cheng','Chin',
+    'Cheong','Lim','Tanaka','Yoshida','Kobayashi','Watanabe','Nakamura',
+    'Yamamoto','Kimura','Ito','Sato','Suzuki','Takahashi','Kato','Oh','Park',
+    'Choi','Jung','Kang','Yoon'
+]
+
+# A pool of 40 popular email domains.  These include major consumer email
+# providers and a handful of regional ISPs and corporate domains.  When
+# ``better_email`` is enabled, a domain is selected from this list.
+EMAIL_DOMAIN_POOL = [
+    'gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','aol.com',
+    'comcast.net','msn.com','live.com','protonmail.com','gmx.com','yandex.com',
+    'zoho.com','verizon.net','att.net','bellsouth.net','ymail.com',
+    'rocketmail.com','me.com','mac.com','cox.net','naver.com','hanmail.net',
+    'qq.com','baidu.com','hotmail.co.uk','btinternet.com','sbcglobal.net',
+    'shaw.ca','telus.net','rogers.com','bell.net','virginmedia.com',
+    'orange.fr','wanadoo.fr','free.fr','blueyonder.co.uk','t-online.de',
+    'mail.com'
+]
+
+# A pool of street names for generating fake addresses.  These are common
+# street names found throughout North America.  Street suffixes are stored
+# separately to allow for realistic combinations (e.g. Maple Street, Oak Ave).
+STREET_NAME_POOL = [
+    'Main','Oak','Pine','Maple','Cedar','Elm','Washington','Lake','Hill','Pleasant',
+    'Park','Spring','Sunset','Valley','Walnut','Cherry','Forest','Lincoln','Ridge',
+    'River','Highland','Adams','Jefferson','Madison','Center','Grant','Jackson',
+    'Franklin','College','Mountain','Cypress','Birch','Poplar','Chestnut','Dogwood',
+    'Hawthorne','Meadow','Locust','Willow','Sycamore','Aspen','Laurel','Magnolia',
+    'Peachtree','Mulberry','Briar','Bay','Broad','Depot','Division','Grove',
+    'Riverbank','Marina','Garden','Heritage','Lakeside','Greenwood','Horizon',
+    'Juniper','Liberty','North','South','East','West','Pioneer','Prospect',
+    'Quail','Redwood','Sequoia','Sierra','Summit','Trail','Vista','Whispering'
+]
+
+# Common street suffixes.
+STREET_SUFFIX_POOL = ['St','Ave','Rd','Blvd','Ln','Dr','Pl','Ct','Way','Terrace']
+
+# A pool of city names.  These include major cities in the United States and
+# Canada as well as some international locations.  Variety in city names
+# reduces repetition across pseudonymised datasets.
+CITY_NAME_POOL = [
+    'New York','Los Angeles','Chicago','Houston','Phoenix','Philadelphia',
+    'San Antonio','San Diego','Dallas','San Jose','Austin','Jacksonville',
+    'San Francisco','Columbus','Fort Worth','Indianapolis','Charlotte','Seattle',
+    'Denver','Washington','Boston','El Paso','Nashville','Detroit','Memphis',
+    'Portland','Oklahoma City','Las Vegas','Louisville','Baltimore','Milwaukee',
+    'Albuquerque','Tucson','Fresno','Sacramento','Kansas City','Long Beach',
+    'Mesa','Atlanta','Colorado Springs','Virginia Beach','Raleigh','Omaha',
+    'Miami','Oakland','Minneapolis','Tulsa','Arlington','New Orleans',
+    'Wichita','Cleveland','Tampa','Aurora','Honolulu','Anaheim','Bakersfield',
+    'Winnipeg','Vancouver','Calgary','Edmonton','Ottawa','Montreal','Toronto',
+    'Quebec City','Victoria','Halifax','London','Birmingham','Manchester',
+    'Glasgow','Dublin','Paris','Berlin','Madrid','Rome','Barcelona','Amsterdam',
+    'Brussels','Zurich','Geneva','Vienna','Tokyo','Osaka','Seoul','Beijing',
+    'Shanghai','Mumbai','Delhi','Sydney','Melbourne','Brisbane','Auckland'
+]
+
+# A pool of state and province names from the United States and Canada.  This
+# list covers all 50 U.S. states plus Canadian provinces and territories.
+STATE_NAME_POOL = [
+    'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
+    'Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa',
+    'Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan',
+    'Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire',
+    'New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio',
+    'Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina',
+    'South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington',
+    'West Virginia','Wisconsin','Wyoming',
+    'British Columbia','Alberta','Saskatchewan','Manitoba','Ontario','Quebec',
+    'New Brunswick','Nova Scotia','Prince Edward Island','Newfoundland and Labrador',
+    'Yukon','Northwest Territories','Nunavut'
+]
+
+# A pool of country names.  This collection includes countries from different
+# continents to provide geographic diversity in pseudonymised records.
+COUNTRY_NAME_POOL = [
+    'United States','Canada','United Kingdom','Australia','Germany','France',
+    'Spain','Italy','Netherlands','Switzerland','Japan','China','India','Mexico',
+    'Brazil','Argentina','Chile','Colombia','Peru','Venezuela','South Africa',
+    'Nigeria','Kenya','Egypt','Turkey','Russia','Poland','Sweden','Norway',
+    'Denmark','Finland','Belgium','Ireland','New Zealand','Singapore','Malaysia',
+    'Thailand','Vietnam','Philippines','South Korea','Indonesia','Saudi Arabia',
+    'United Arab Emirates','Qatar','Kuwait','Greece','Portugal','Austria'
+]
+
 
 class TokenGenerator:
     """
@@ -61,93 +212,25 @@ class TokenGenerator:
     # Supported formats: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, DD/MM/YYYY, MM/DD/YYYY
     _DATE_SEPARATOR_PATTERN = re.compile(r"[\-/.]")
 
-    # Pools of names for pseudonymisation.  Each pool contains at least 150
-    # entries to ensure a wide variety of generated names.  These lists are
-    # deliberately gender‑neutral and draw from common names.  The lists can
-    # be extended or replaced as desired.
-    FIRST_NAME_POOL: List[str] = [
-        'Alex', 'Jordan', 'Taylor', 'Casey', 'Morgan', 'Jamie', 'Cameron',
-        'Riley', 'Sam', 'Charlie', 'Dakota', 'Reese', 'Robin', 'Avery',
-        'Drew', 'Hayden', 'Parker', 'Quinn', 'Sydney', 'Kai', 'Harper',
-        'Kendall', 'Max', 'Jesse', 'Blake', 'Cody', 'Skyler', 'Sage',
-        'Leslie', 'Rowan', 'Shawn', 'Bailey', 'Emerson', 'Finley',
-        'Adrian', 'Angel', 'Reagan', 'Toby', 'Marley', 'Kerry', 'Freddie',
-        'Kelly', 'Andy', 'Lee', 'River', 'Justice', 'Dana', 'Rene',
-        'Madison', 'Pat', 'Sasha', 'Devon', 'Kris', 'Peyton', 'Corey',
-        'Jaden', 'Alexis', 'Logan', 'Erin', 'Terry', 'Aubrey', 'Jackie',
-        'Kennedy', 'Jessie', 'Frankie', 'Rory', 'Cory', 'Toni', 'Jaime',
-        'Arden', 'Ashton', 'Brett', 'Brook', 'Campbell', 'Darian',
-        'Dominique', 'Eden', 'Ellis', 'Glenn', 'Hunter', 'Jayden',
-        'Kamryn', 'Keegan', 'Kyle', 'Lane', 'Lennon', 'Milan', 'Nicky',
-        'Oakley', 'Patton', 'Phoenix', 'Noel', 'Tatum', 'Shiloh', 'Sawyer',
-        'Sidney', 'Spencer', 'Teagan', 'Tracy', 'Whitney', 'Winter', 'Wren',
-        'Addison', 'Ainsley', 'Ariel', 'Briar', 'Chandler', 'Dallas',
-        'Dylan', 'Emery', 'Grayson', 'Harley', 'Landon', 'Lennox', 'Lexi',
-        'Micah', 'Payton', 'Piper', 'Quincy', 'West', 'Zion', 'Paxton',
-        'Remy', 'Bowie', 'Sloane', 'Arlo', 'Bellamy', 'Indigo', 'Jess',
-        'Kirby', 'Lux', 'Mack', 'Nico', 'Orion',
-        # Additional names to bring the pool to at least 150 entries
-        'Blair', 'Cecil', 'Darby', 'Ellery', 'Genesis', 'Hollis', 'Keaton',
-        'Linden', 'Marion', 'Nevada', 'Oak', 'Ramsey', 'Shelby', 'Urban',
-        'Yael', 'Zephyr'
-    ]
-    LAST_NAME_POOL: List[str] = [
-        'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia',
-        'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez',
-        'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore',
-        'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris',
-        'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker',
-        'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen',
-        'Hill', 'Flores', 'Green', 'Adams', 'Nelson', 'Baker', 'Hall',
-        'Rivera', 'Campbell', 'Mitchell', 'Carter', 'Roberts', 'Gomez',
-        'Phillips', 'Evans', 'Turner', 'Diaz', 'Parker', 'Cruz', 'Edwards',
-        'Collins', 'Reyes', 'Stewart', 'Morris', 'Murphy', 'Cook',
-        'Rogers', 'Gutierrez', 'Ortiz', 'Morgan', 'Cooper', 'Peterson',
-        'Bailey', 'Reed', 'Kelly', 'Howard', 'Ramos', 'Kim', 'Cox', 'Ward',
-        'Richardson', 'Watson', 'Brooks', 'Chavez', 'Wood', 'James',
-        'Bennett', 'Gray', 'Mendoza', 'Ruiz', 'Hughes', 'Price', 'Alvarez',
-        'Castillo', 'Sanders', 'Patel', 'Myers', 'Long', 'Ross', 'Foster',
-        'Jimenez', 'Powell', 'Jenkins', 'Perry', 'Russell', 'Sullivan',
-        'Bell', 'Coleman', 'Butler', 'Henderson', 'Barnes', 'Fisher',
-        'Vasquez', 'Simmons', 'Romero', 'Jordan', 'Patterson', 'Alexander',
-        'Hamilton', 'Graham', 'Reynolds', 'Griffin', 'Wallace', 'West',
-        'Cole', 'Lawrence', 'George', 'Chapman', 'Pickett', 'Grant',
-        'Wheeler', 'Reid', 'Fox', 'Mason', 'Stone', 'Bishop', 'Knight',
-        'Carpenter', 'Hunter', 'Barber', 'Rice', 'Hayes', 'Ford', 'Ryan',
-        'Gibson', 'Jameson', 'Holland', 'Sherman', 'Banks', 'Ray', 'Weber',
-        'Reece', 'Perkins', 'Pearson', 'Hawkins', 'Dean', 'Austin',
-        'Spencer', 'Swanson', 'Hoffman', 'Little', 'Carlson', 'Stanley'
-    ]
-    # Pool of common email domains used when better_email is enabled.  This list
-    # contains 40 widely used email providers to produce realistic fake
-    # addresses.  The pool may be customised as required.
-    EMAIL_DOMAIN_POOL: List[str] = [
-        'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com',
-        'icloud.com', 'protonmail.com', 'msn.com', 'live.com', 'me.com',
-        'comcast.net', 'verizon.net', 'att.net', 'yandex.com', 'mail.com',
-        'zoho.com', 'gmx.com', 'hushmail.com', 'mail.ru', 'qq.com',
-        '163.com', '126.com', 'sina.com', 'outlook.co.uk', 'mail.ee',
-        'orange.fr', 'btinternet.com', 'sky.com', 'googlemail.com',
-        'yahoo.co.uk', 'ymail.com', 'rocketmail.com', 'mailinator.com',
-        'fastmail.com', 'posteo.de', 'libero.it', 'tin.it', 'naver.com',
-        'seznam.cz', 'wp.pl', 'o2.co.uk'
-    ]
 
-
-    def __init__(self, deterministic: bool = False, secret_key: Optional[bytes] = None, better_email: bool = False):
-        """
-        Create a new TokenGenerator.
-
-        :param deterministic: If true, tokens are derived deterministically from
-            an HMAC of the original value using the provided secret key.  If
-            false, random values are used.
-        :param secret_key: Secret key used for HMAC in deterministic mode.
-        :param better_email: When true, fake emails are generated using a pool
-            of common domains and more personal account names.  When false,
-            emails are generated with a simple hash and a generic domain.
-        """
-        self.deterministic = deterministic
+    def __init__(
+        self,
+        deterministic: bool = False,
+        secret_key: Optional[bytes] = None,
+        better_email: bool = False,
+    ):
+        # Flag indicating whether pseudonymised email addresses should use
+        # realistic local parts and a pool of common domains.  When
+        # ``better_email`` is False (default), emails are replaced with
+        # hexadecimal tokens at a generic domain.  When True, the local part
+        # is constructed from pseudonymised first and last names and a small
+        # random or deterministic numeric suffix, and the domain is selected
+        # from a pool of common email providers.  This option helps produce
+        # more natural‑looking email addresses while still breaking any
+        # association with the original data.
         self.better_email = better_email
+
+        self.deterministic = deterministic
         if deterministic:
             if not secret_key:
                 raise ValueError("secret_key is required for deterministic token generation")
@@ -186,20 +269,40 @@ class TokenGenerator:
         return ''.join(result_chars)
 
     def _generate_fake_email(self, value: str) -> str:
-        """Generate a fake email address.
-
-        If ``better_email`` is disabled, the local part is an 8‑character
-        hexadecimal digest (or random UUID) and the domain is a generic
-        ``anonymized.local``.  When ``better_email`` is enabled, the local
-        part is constructed from randomly (or deterministically) selected
-        first and last names from the name pools, producing a more personal
-        username (e.g. ``alex.smith``).  The domain is chosen from a pool of
-        common email providers.  Deterministic mode ensures the same email
-        pseudonym for the same input value.
         """
-        # When better_email is not enabled, fall back to simple hex local and
-        # generic domain
-        if not self.better_email:
+        Generate a fake email address.  If the ``better_email`` flag is
+        enabled, this method constructs a realistic local part using
+        pseudonymised first and last names and appends a domain from
+        ``EMAIL_DOMAIN_POOL``.  Otherwise it produces a hexadecimal local
+        part and appends a generic anonymised domain.  Deterministic mode
+        preserves repeatability of both the local part and domain choice.
+        """
+        if self.better_email:
+            # Use pseudonymised names to build the local part.  Deterministic
+            # mode ensures the same email maps to the same pseudonym.
+            first = self._generate_first_name(value)
+            last = self._generate_last_name(value)
+            if self.deterministic:
+                digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+                # Derive a numeric suffix from digest to reduce collisions
+                suffix = ''.join(str(int(c, 16) % 10) for c in digest[:3])
+                local = f"{first.lower()}.{last.lower()}{suffix}"
+                index = int(digest[3:7], 16) % len(EMAIL_DOMAIN_POOL)
+                domain = EMAIL_DOMAIN_POOL[index]
+            else:
+                try:
+                    import secrets
+                    randbelow = secrets.randbelow
+                    domain = secrets.choice(EMAIL_DOMAIN_POOL)
+                    suffix = f"{randbelow(1000):03d}"
+                except ImportError:
+                    import random
+                    domain = random.choice(EMAIL_DOMAIN_POOL)
+                    suffix = f"{random.randrange(1000):03d}"
+                local = f"{first.lower()}.{last.lower()}{suffix}"
+            return f"{local}@{domain}"
+        else:
+            # Determine local part length from original or default to 8
             local_length = 8
             if self.deterministic:
                 digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
@@ -207,36 +310,6 @@ class TokenGenerator:
             else:
                 local = uuid.uuid4().hex[:local_length]
             return f"{local}@anonymized.local"
-        # better_email mode: build a more personal email address
-        first_pool = self.FIRST_NAME_POOL
-        last_pool = self.LAST_NAME_POOL
-        domain_pool = self.EMAIL_DOMAIN_POOL
-        if self.deterministic:
-            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            # Use successive 4‑hex‑digit chunks to select the first name, last
-            # name and domain
-            idx_first = int(digest[:4], 16) % len(first_pool)
-            idx_last = int(digest[4:8], 16) % len(last_pool)
-            idx_domain = int(digest[8:12], 16) % len(domain_pool)
-            first = first_pool[idx_first].lower()
-            last = last_pool[idx_last].lower()
-            local = f"{first}.{last}"
-            domain = domain_pool[idx_domain]
-        else:
-            try:
-                import secrets
-                rng_choice = secrets.choice
-            except ImportError:
-                import random
-                rng_choice = random.choice
-            first = rng_choice(first_pool).lower()
-            last = rng_choice(last_pool).lower()
-            # Assemble local part; optionally add a two‑digit number to increase variety
-            local = f"{first}.{last}"
-            domain = rng_choice(domain_pool)
-        # Ensure the local part contains only valid characters
-        local = re.sub(r'[^a-z0-9._+-]', '', local)
-        return f"{local}@{domain}"
 
     def _generate_fake_name(self, value: str) -> str:
         """
@@ -245,25 +318,23 @@ class TokenGenerator:
         common first and last names.  Deterministic mode uses the HMAC digest to
         choose names so the same original name yields the same pseudonym.
         """
-        # Use the configured name pools to generate a fake full name.  The
-        # number of name parts (e.g. first, middle, last) in the original
-        # value is preserved.  Middle name components are drawn from the
-        # first name pool, while the last component is drawn from the last
-        # name pool.
-        first_names = self.FIRST_NAME_POOL
-        last_names = self.LAST_NAME_POOL
+        # Use the global pools of names to provide a large and diverse set of
+        # first and last names.  This reduces repetition and produces
+        # pseudonyms that better reflect real population diversity.
+        first_names = FIRST_NAME_POOL
+        last_names = LAST_NAME_POOL
         parts = value.split()
         num_parts = len(parts)
         names: List[str] = []
         if self.deterministic:
-            # Use HMAC digest to deterministically select names.  Each name
-            # component consumes a 4‑hex‑digit chunk of the digest to compute
-            # an index into the respective name pool.
+            # Use HMAC digest to deterministically select names
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            # Each part uses a 4‑hex‑digit chunk to compute an index
             for i in range(num_parts):
                 chunk = digest[(i * 4):(i * 4) + 4]
                 index = int(chunk, 16)
                 if i == num_parts - 1:
+                    # Last part uses last_names list
                     names.append(last_names[index % len(last_names)])
                 else:
                     names.append(first_names[index % len(first_names)])
@@ -403,10 +474,13 @@ class TokenGenerator:
         if not column_name:
             return None
         lower = column_name.lower()
-        # Define keywords indicating first, middle and last names.  Middle
-        # names are treated as first names for pseudonymisation purposes.
-        first_keywords = ['first', 'given', 'middle']
-        last_keywords = ['last', 'surname', 'family']
+        # Define keywords indicating first, middle and last names.  Middle,
+        # preferred, nickname and alias names are treated as first names for
+        # pseudonymisation purposes.  Maiden names are treated as last names.
+        # Include 'name' itself to treat generic name columns as first names.  Without
+        # this, values like single names in a 'Name' column would be hashed.
+        first_keywords = ['first', 'given', 'middle', 'preferred', 'nick', 'alias', 'name']
+        last_keywords = ['last', 'surname', 'family', 'maiden']
         # Remove common separators
         tokens = re.split(r'[_\s]', lower)
         for token in tokens:
@@ -419,36 +493,40 @@ class TokenGenerator:
         return None
 
     def _generate_first_name(self, value: str) -> str:
-        """Generate a fake first name."""
-        # Use the shared first name pool for generating a fake first or middle name
-        names = self.FIRST_NAME_POOL
+        """Generate a fake first name.  Uses a large pre‑defined pool.
+
+        If deterministic mode is enabled, the choice is derived from an HMAC
+        digest of the original value so that the same input yields the same
+        pseudonym.  Otherwise a random selection is made from
+        ``FIRST_NAME_POOL`` using the secrets module when available.
+        """
+        pool = FIRST_NAME_POOL
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            index = int(digest[:4], 16) % len(names)
-            return names[index]
+            index = int(digest[:4], 16) % len(pool)
+            return pool[index]
         else:
             try:
                 import secrets
-                return secrets.choice(names)
+                return secrets.choice(pool)
             except ImportError:
                 import random
-                return random.choice(names)
+                return random.choice(pool)
 
     def _generate_last_name(self, value: str) -> str:
-        """Generate a fake last name."""
-        # Use the shared last name pool for generating a fake surname
-        names = self.LAST_NAME_POOL
+        """Generate a fake last name from the pooled list of common surnames."""
+        pool = LAST_NAME_POOL
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            index = int(digest[:4], 16) % len(names)
-            return names[index]
+            index = int(digest[:4], 16) % len(pool)
+            return pool[index]
         else:
             try:
                 import secrets
-                return secrets.choice(names)
+                return secrets.choice(pool)
             except ImportError:
                 import random
-                return random.choice(names)
+                return random.choice(pool)
 
     def _generate_fake_datetime(self, date_part: str, time_part: str) -> str:
         """
@@ -501,6 +579,149 @@ class TokenGenerator:
                 fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
         return f"{fake_date} {fake_time}"
 
+    # -------------------------------------------------------------------
+    # Address and location handling
+    #
+    # The following helper methods detect columns containing location
+    # information (addresses, cities, states, zip/postal codes and countries)
+    # and generate type‑appropriate pseudonyms.  These heuristics rely on
+    # column names rather than the data itself to avoid false positives on
+    # numeric strings.
+
+    def _is_address_column(self, column_name: Optional[str]) -> bool:
+        """Return True if the column name suggests a street address."""
+        if not column_name:
+            return False
+        lower = column_name.lower()
+        # Split on underscores and spaces to handle compound names like 'mailing_address'
+        tokens = re.split(r'[_\s]', lower)
+        # Match only whole tokens to avoid false positives such as 'state' containing 'st'
+        address_keywords = {'address', 'street', 'addr', 'line'}
+        short_keywords = {'st'}  # Recognize standalone 'st' as abbreviation for street
+        for token in tokens:
+            if token in address_keywords:
+                return True
+            if token in short_keywords:
+                return True
+        return False
+
+    def _is_city_column(self, column_name: Optional[str]) -> bool:
+        """Return True if the column name suggests a city or town."""
+        if not column_name:
+            return False
+        lower = column_name.lower()
+        tokens = re.split(r'[_\s]', lower)
+        city_keywords = ['city', 'town', 'municipality', 'village']
+        return any(any(kw in token for kw in city_keywords) for token in tokens)
+
+    def _is_state_column(self, column_name: Optional[str]) -> bool:
+        """Return True if the column name suggests a state, province or region."""
+        if not column_name:
+            return False
+        lower = column_name.lower()
+        tokens = re.split(r'[_\s]', lower)
+        state_keywords = ['state', 'province', 'region', 'territory']
+        return any(any(kw in token for kw in state_keywords) for token in tokens)
+
+    def _is_zip_column(self, column_name: Optional[str]) -> bool:
+        """Return True if the column name suggests a postal or ZIP code."""
+        if not column_name:
+            return False
+        lower = column_name.lower()
+        tokens = re.split(r'[_\s]', lower)
+        zip_keywords = ['zip', 'postal', 'postcode']
+        return any(any(kw in token for kw in zip_keywords) for token in tokens)
+
+    def _is_country_column(self, column_name: Optional[str]) -> bool:
+        """Return True if the column name suggests a country."""
+        if not column_name:
+            return False
+        lower = column_name.lower()
+        tokens = re.split(r'[_\s]', lower)
+        country_keywords = ['country', 'nation', 'nationality']
+        return any(any(kw in token for kw in country_keywords) for token in tokens)
+
+    def _generate_fake_address(self, value: str) -> str:
+        """Generate a fake street address using a number and random street name."""
+        # Determine house number range.  Many addresses are between 1 and 9999.
+        max_number = 9999
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            # Use first 8 hex digits for the number
+            num_int = int(digest[:8], 16)
+            number = (num_int % max_number) + 1
+            # Choose street name and suffix deterministically
+            street_index = int(digest[8:12], 16) % len(STREET_NAME_POOL)
+            suffix_index = int(digest[12:16], 16) % len(STREET_SUFFIX_POOL)
+            street = STREET_NAME_POOL[street_index]
+            suffix = STREET_SUFFIX_POOL[suffix_index]
+        else:
+            try:
+                import secrets
+                number = secrets.randbelow(max_number) + 1
+                street = secrets.choice(STREET_NAME_POOL)
+                suffix = secrets.choice(STREET_SUFFIX_POOL)
+            except ImportError:
+                import random
+                number = random.randrange(1, max_number + 1)
+                street = random.choice(STREET_NAME_POOL)
+                suffix = random.choice(STREET_SUFFIX_POOL)
+        return f"{number} {street} {suffix}"
+
+    def _generate_fake_city(self, value: str) -> str:
+        """Select a fake city from the pool."""
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            index = int(digest[:8], 16) % len(CITY_NAME_POOL)
+            return CITY_NAME_POOL[index]
+        else:
+            try:
+                import secrets
+                return secrets.choice(CITY_NAME_POOL)
+            except ImportError:
+                import random
+                return random.choice(CITY_NAME_POOL)
+
+    def _generate_fake_state(self, value: str) -> str:
+        """Select a fake state or province from the pool."""
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            index = int(digest[:8], 16) % len(STATE_NAME_POOL)
+            return STATE_NAME_POOL[index]
+        else:
+            try:
+                import secrets
+                return secrets.choice(STATE_NAME_POOL)
+            except ImportError:
+                import random
+                return random.choice(STATE_NAME_POOL)
+
+    def _generate_fake_zip(self, value: str) -> str:
+        """Generate a fake ZIP or postal code.  This returns a 5‑digit code."""
+        # Count how many alphanumeric characters appear in the original value.
+        # Some postal codes include letters (e.g. Canadian codes).  For
+        # simplicity, we generate a numeric code of the same length up to 6.
+        length = max(5, min(len(re.sub(r'[^A-Za-z0-9]', '', value)), 6))
+        if self.deterministic:
+            digits = self._generate_deterministic_digits(value, length)
+        else:
+            digits = self._generate_random_digits(length)
+        return digits
+
+    def _generate_fake_country(self, value: str) -> str:
+        """Select a fake country from the pool."""
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            index = int(digest[:8], 16) % len(COUNTRY_NAME_POOL)
+            return COUNTRY_NAME_POOL[index]
+        else:
+            try:
+                import secrets
+                return secrets.choice(COUNTRY_NAME_POOL)
+            except ImportError:
+                import random
+                return random.choice(COUNTRY_NAME_POOL)
+
     def _is_birthdate_column(self, column_name: Optional[str]) -> bool:
         """
         Heuristic to determine if a column likely contains birth dates or dates of
@@ -528,17 +749,9 @@ class TokenGenerator:
         parts = value.split(sep)
         # Identify the year position
         year_index = parts.index(next(p for p in parts if len(p) == 4))
-        # Set range: 1900-01-01 to a date at least 18 years before today
+        # Set range: 1900-01-01 to today
         base_date = datetime.date(1900, 1, 1)
-        today = datetime.date.today()
-        # Calculate the latest allowable date such that the person is at least
-        # 18 years old.  Use replace to subtract years while preserving the
-        # month/day; handle February 29 in non‑leap years by falling back to
-        # February 28.
-        try:
-            end_date = today.replace(year=today.year - 18)
-        except ValueError:
-            end_date = today.replace(year=today.year - 18, day=28)
+        end_date = datetime.date.today()
         days_range = (end_date - base_date).days + 1
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
@@ -566,6 +779,50 @@ class TokenGenerator:
         else:
             return f"{y:04d}{sep}{m:02d}{sep}{d:02d}"
 
+    def _generate_fake_birth_datetime(self, date_part: str, time_part: str) -> str:
+        """
+        Generate a fake datetime for birth dates, ensuring the date part is not
+        in the future.  Uses _generate_fake_birth_date for the date and
+        generates a time in the same format as the original.
+        """
+        fake_date = self._generate_fake_birth_date(date_part)
+        # Determine if time_part uses AM/PM
+        time_str = time_part.strip()
+        has_meridiem = time_str.endswith(('AM', 'PM')) or time_str.endswith(('am', 'pm'))
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, (date_part + time_part).encode('utf-8'), hashlib.sha256).hexdigest()
+            digest_int = int(digest[:12], 16)
+            if has_meridiem:
+                hour = (digest_int % 12) + 1
+                minute = (digest_int // 12) % 60
+                second = (digest_int // (12 * 60)) % 60
+                ampm = 'AM' if ((digest_int // (12 * 60 * 60)) % 2) == 0 else 'PM'
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
+            else:
+                hour = digest_int % 24
+                minute = (digest_int // 24) % 60
+                second = (digest_int // (24 * 60)) % 60
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
+        else:
+            try:
+                import secrets
+                randbelow = secrets.randbelow
+            except ImportError:
+                import random
+                randbelow = lambda n: random.randrange(n)
+            if has_meridiem:
+                hour = randbelow(12) + 1
+                minute = randbelow(60)
+                second = randbelow(60)
+                ampm = 'AM' if randbelow(2) == 0 else 'PM'
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
+            else:
+                hour = randbelow(24)
+                minute = randbelow(60)
+                second = randbelow(60)
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
+        return f"{fake_date} {fake_time}"
+
     def generate(self, value: str, column_name: Optional[str] = None) -> str:
         """
         Return a pseudonym token for the given input value.  If the value matches
@@ -589,8 +846,8 @@ class TokenGenerator:
                 if self._is_date_pattern(date_part):
                     # Birthdate columns should not generate future dates
                     if column_name and self._is_birthdate_column(column_name):
-                        return self._generate_fake_birth_date(date_part)
-                    return self._generate_fake_date(date_part)
+                        return self._generate_fake_birth_datetime(date_part, time_part)
+                    return self._generate_fake_datetime(date_part, time_part)
         # Email addresses
         if self._EMAIL_PATTERN.match(val_str):
             return self._generate_fake_email(val_str)
@@ -603,6 +860,24 @@ class TokenGenerator:
                 digits = self._generate_random_digits(num_digits)
             # Format as ###-##-####
             return f"{digits[:3]}-{digits[3:5]}-{digits[5:]}"
+        # Column‑based address and location detection.  These checks rely on
+        # the column name rather than the value to determine whether
+        # pseudonymisation should produce an address, city, state, ZIP code or
+        # country.  Perform this before phone and generic name detection so
+        # that numeric patterns such as ZIP codes or multi‑word locations
+        # (e.g. 'New York') in their respective columns are not misclassified
+        # as phone numbers or names.
+        if column_name:
+            if self._is_address_column(column_name):
+                return self._generate_fake_address(val_str)
+            if self._is_city_column(column_name):
+                return self._generate_fake_city(val_str)
+            if self._is_state_column(column_name):
+                return self._generate_fake_state(val_str)
+            if self._is_zip_column(column_name):
+                return self._generate_fake_zip(val_str)
+            if self._is_country_column(column_name):
+                return self._generate_fake_country(val_str)
         # Phone number pattern (may contain country code and separators)
         if self._PHONE_PATTERN.match(val_str):
             # Count number of digit positions in the phone number
@@ -774,12 +1049,17 @@ def anonymize_file(
     secret_key: Optional[str] = None,
     append_mapping: bool = True,
     verbose: bool = True,
+    better_email: bool = False,
 ) -> None:
     """
     Read a file, pseudonymise PII columns, write the anonymised file and save the mapping.
-    If append_mapping is True and the mapping file exists, it loads and updates the mapping;
-    otherwise it creates a new mapping.  secret_key is used only for deterministic token
-    generation.
+
+    The ``better_email`` flag controls whether email addresses are replaced with
+    realistic pseudonyms (constructed from pseudonymised names and a pool of
+    common domains) instead of a hexadecimal local part and a fixed domain.
+    If ``append_mapping`` is True and the mapping file exists, it loads and
+    updates the mapping; otherwise a new mapping is created.  ``secret_key``
+    is required for deterministic token generation.
     """
     df = read_file(input_path)
 
@@ -795,7 +1075,11 @@ def anonymize_file(
         if not secret_key:
             raise ValueError("secret_key must be provided for deterministic token generation")
         key_bytes = secret_key.encode('utf-8')
-    token_gen = TokenGenerator(deterministic=deterministic, secret_key=key_bytes)
+    token_gen = TokenGenerator(
+        deterministic=deterministic,
+        secret_key=key_bytes,
+        better_email=better_email,
+    )
 
     # Load existing mapping if append_mapping
     if append_mapping and os.path.exists(mapping_path):
@@ -854,6 +1138,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     parser.add_argument('--append-mapping', action='store_true', help="Append to existing mapping if it exists")
     parser.add_argument('--deanonymize', action='store_true', help="Perform de‑anonymisation instead of anonymisation")
     parser.add_argument('--quiet', action='store_true', help="Suppress verbose output")
+    parser.add_argument('--better-email', action='store_true', help="Generate more realistic email addresses using a pool of common domains")
     args = parser.parse_args(argv)
 
     pii_columns = args.pii_columns.split(',') if args.pii_columns else None
@@ -879,6 +1164,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             secret_key=args.secret_key,
             append_mapping=args.append_mapping,
             verbose=verbose,
+            better_email=args.better_email,
         )
 
 
