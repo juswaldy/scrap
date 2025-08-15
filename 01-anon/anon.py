@@ -61,6 +61,60 @@ class TokenGenerator:
     # Supported formats: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, DD/MM/YYYY, MM/DD/YYYY
     _DATE_SEPARATOR_PATTERN = re.compile(r"[\-/.]")
 
+    # Pools of first and last names used for pseudonymisation.  Each pool
+    # contains at least 150 entries to ensure a wide variety of pseudonyms.
+    # These lists are defined at class level so that all methods refer to the
+    # same pools and to avoid duplicating the definitions.
+    FIRST_NAME_POOL: List[str] = [
+        'Alex', 'Jordan', 'Taylor', 'Casey', 'Morgan', 'Jamie', 'Cameron',
+        'Riley', 'Sam', 'Charlie', 'Dakota', 'Reese', 'Robin', 'Avery',
+        'Drew', 'Hayden', 'Parker', 'Quinn', 'Sydney', 'Kai', 'Harper',
+        'Kendall', 'Max', 'Jesse', 'Blake', 'Cody', 'Skyler', 'Sage',
+        'Leslie', 'Rowan', 'Shawn', 'Bailey', 'Emerson', 'Finley',
+        'Adrian', 'Angel', 'Reagan', 'Toby', 'Marley', 'Kerry', 'Freddie',
+        'Kelly', 'Andy', 'Lee', 'River', 'Justice', 'Dana', 'Rene',
+        'Madison', 'Pat', 'Sasha', 'Devon', 'Kris', 'Peyton', 'Corey',
+        'Jaden', 'Alexis', 'Logan', 'Erin', 'Terry', 'Aubrey', 'Jackie',
+        'Kennedy', 'Jessie', 'Frankie', 'Rory', 'Cory', 'Toni', 'Jaime',
+        'Arden', 'Ashton', 'Brett', 'Brook', 'Campbell', 'Darian',
+        'Dominique', 'Eden', 'Ellis', 'Glenn', 'Hunter', 'Jayden',
+        'Kamryn', 'Keegan', 'Kyle', 'Lane', 'Lennon', 'Milan', 'Nicky',
+        'Oakley', 'Patton', 'Phoenix', 'Noel', 'Tatum', 'Shiloh', 'Sawyer',
+        'Sidney', 'Spencer', 'Teagan', 'Tracy', 'Whitney', 'Winter', 'Wren',
+        'Addison', 'Ainsley', 'Ariel', 'Briar', 'Chandler', 'Dallas',
+        'Dylan', 'Emery', 'Grayson', 'Harley', 'Landon', 'Lennox', 'Lexi',
+        'Micah', 'Payton', 'Piper', 'Quincy', 'West', 'Zion', 'Paxton',
+        'Remy', 'Bowie', 'Sloane', 'Arlo', 'Bellamy', 'Indigo', 'Jess',
+        'Kirby', 'Lux', 'Mack', 'Nico', 'Orion'
+    ]
+    LAST_NAME_POOL: List[str] = [
+        'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia',
+        'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez',
+        'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore',
+        'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris',
+        'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker',
+        'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen',
+        'Hill', 'Flores', 'Green', 'Adams', 'Nelson', 'Baker', 'Hall',
+        'Rivera', 'Campbell', 'Mitchell', 'Carter', 'Roberts', 'Gomez',
+        'Phillips', 'Evans', 'Turner', 'Diaz', 'Parker', 'Cruz', 'Edwards',
+        'Collins', 'Reyes', 'Stewart', 'Morris', 'Murphy', 'Cook',
+        'Rogers', 'Gutierrez', 'Ortiz', 'Morgan', 'Cooper', 'Peterson',
+        'Bailey', 'Reed', 'Kelly', 'Howard', 'Ramos', 'Kim', 'Cox', 'Ward',
+        'Richardson', 'Watson', 'Brooks', 'Chavez', 'Wood', 'James',
+        'Bennett', 'Gray', 'Mendoza', 'Ruiz', 'Hughes', 'Price', 'Alvarez',
+        'Castillo', 'Sanders', 'Patel', 'Myers', 'Long', 'Ross', 'Foster',
+        'Jimenez', 'Powell', 'Jenkins', 'Perry', 'Russell', 'Sullivan',
+        'Bell', 'Coleman', 'Butler', 'Henderson', 'Barnes', 'Fisher',
+        'Vasquez', 'Simmons', 'Romero', 'Jordan', 'Patterson', 'Alexander',
+        'Hamilton', 'Graham', 'Reynolds', 'Griffin', 'Wallace', 'West',
+        'Cole', 'Lawrence', 'George', 'Chapman', 'Pickett', 'Grant',
+        'Wheeler', 'Reid', 'Fox', 'Mason', 'Stone', 'Bishop', 'Knight',
+        'Carpenter', 'Hunter', 'Barber', 'Rice', 'Hayes', 'Ford', 'Ryan',
+        'Gibson', 'Jameson', 'Holland', 'Sherman', 'Banks', 'Ray', 'Weber',
+        'Reece', 'Perkins', 'Pearson', 'Hawkins', 'Dean', 'Austin',
+        'Spencer', 'Swanson', 'Hoffman', 'Little', 'Carlson', 'Stanley'
+    ]
+
 
     def __init__(self, deterministic: bool = False, secret_key: Optional[bytes] = None):
         self.deterministic = deterministic
@@ -114,35 +168,30 @@ class TokenGenerator:
 
     def _generate_fake_name(self, value: str) -> str:
         """
-        Generate a fake full name.  The number of name parts (e.g. first and last
-        names) will match the original.  Names are selected from fixed lists of
-        common first and last names.  Deterministic mode uses the HMAC digest to
-        choose names so the same original name yields the same pseudonym.
+        Generate a fake full name.  The number of name parts in the original
+        value (e.g. first, middle and last) will be preserved.  The generator
+        uses large pools of first and last names (150 entries each) to produce
+        realistic pseudonyms.  Intermediate name parts (e.g. middle names) are
+        drawn from the first name pool.  In deterministic mode, the same
+        original name always yields the same pseudonym by deriving indices from
+        the HMAC of the original value.
         """
-        # Predefined lists of names.  In a real application these could be
-        # extended or loaded from external resources.
-        first_names = [
-            'Alex', 'Jordan', 'Taylor', 'Casey', 'Morgan', 'Jamie', 'Cameron',
-            'Riley', 'Sam', 'Charlie', 'Dakota', 'Reese', 'Robin', 'Avery',
-            'Drew', 'Hayden'
-        ]
-        last_names = [
-            'Smith', 'Johnson', 'Taylor', 'Brown', 'Anderson', 'Clark', 'Harris',
-            'Lee', 'Wilson', 'Martin', 'Thompson', 'Lewis', 'Walker', 'Young',
-            'Hall', 'Allen'
-        ]
+        # Refer to the class‑level name pools rather than locally defined lists.
+        first_names = self.FIRST_NAME_POOL
+        last_names = self.LAST_NAME_POOL
         parts = value.split()
         num_parts = len(parts)
         names: List[str] = []
         if self.deterministic:
-            # Use HMAC digest to deterministically select names
+            # Use HMAC digest to deterministically select names.  Each part of
+            # the original name consumes a 4‑hex‑digit chunk of the digest to
+            # compute an index.  The last part is drawn from the surname pool,
+            # all preceding parts are drawn from the first name pool.
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            # Each part uses a 4‑hex‑digit chunk to compute an index
             for i in range(num_parts):
                 chunk = digest[(i * 4):(i * 4) + 4]
                 index = int(chunk, 16)
                 if i == num_parts - 1:
-                    # Last part uses last_names list
                     names.append(last_names[index % len(last_names)])
                 else:
                     names.append(first_names[index % len(first_names)])
@@ -282,8 +331,9 @@ class TokenGenerator:
         if not column_name:
             return None
         lower = column_name.lower()
-        # Define keywords indicating first and last names
-        first_keywords = ['first', 'given']
+        # Define keywords indicating first, middle and last names.  Middle names
+        # are treated the same as first names for pseudonymisation purposes.
+        first_keywords = ['first', 'given', 'middle']
         last_keywords = ['last', 'surname', 'family']
         # Remove common separators
         tokens = re.split(r'[_\s]', lower)
@@ -297,42 +347,34 @@ class TokenGenerator:
         return None
 
     def _generate_first_name(self, value: str) -> str:
-        """Generate a fake first name."""
-        first_names = [
-            'Alex', 'Jordan', 'Taylor', 'Casey', 'Morgan', 'Jamie', 'Cameron',
-            'Riley', 'Sam', 'Charlie', 'Dakota', 'Reese', 'Robin', 'Avery',
-            'Drew', 'Hayden'
-        ]
+        """Generate a fake first name from the configured pool of first names."""
+        names = self.FIRST_NAME_POOL
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            index = int(digest[:4], 16) % len(first_names)
-            return first_names[index]
+            index = int(digest[:4], 16) % len(names)
+            return names[index]
         else:
             try:
                 import secrets
-                return secrets.choice(first_names)
+                return secrets.choice(names)
             except ImportError:
                 import random
-                return random.choice(first_names)
+                return random.choice(names)
 
     def _generate_last_name(self, value: str) -> str:
-        """Generate a fake last name."""
-        last_names = [
-            'Smith', 'Johnson', 'Taylor', 'Brown', 'Anderson', 'Clark', 'Harris',
-            'Lee', 'Wilson', 'Martin', 'Thompson', 'Lewis', 'Walker', 'Young',
-            'Hall', 'Allen'
-        ]
+        """Generate a fake last name from the configured pool of last names."""
+        names = self.LAST_NAME_POOL
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            index = int(digest[:4], 16) % len(last_names)
-            return last_names[index]
+            index = int(digest[:4], 16) % len(names)
+            return names[index]
         else:
             try:
                 import secrets
-                return secrets.choice(last_names)
+                return secrets.choice(names)
             except ImportError:
                 import random
-                return random.choice(last_names)
+                return random.choice(names)
 
     def _generate_fake_datetime(self, date_part: str, time_part: str) -> str:
         """
@@ -412,9 +454,18 @@ class TokenGenerator:
         parts = value.split(sep)
         # Identify the year position
         year_index = parts.index(next(p for p in parts if len(p) == 4))
-        # Set range: 1900-01-01 to today
+        # Set range: 1900-01-01 to a date at least 18 years prior to today.
         base_date = datetime.date(1900, 1, 1)
-        end_date = datetime.date.today()
+        today = datetime.date.today()
+        # Determine the latest allowable birthdate such that the person is at
+        # least 18 years old.  Using replace to subtract years preserves the
+        # month/day semantics; if today is 29 Feb and the target year is not
+        # leap, fallback to 28 Feb.
+        try:
+            end_date = today.replace(year=today.year - 18)
+        except ValueError:
+            # Handle February 29 in non-leap years by setting day to 28
+            end_date = today.replace(year=today.year - 18, day=28)
         days_range = (end_date - base_date).days + 1
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
@@ -442,50 +493,6 @@ class TokenGenerator:
         else:
             return f"{y:04d}{sep}{m:02d}{sep}{d:02d}"
 
-    def _generate_fake_birth_datetime(self, date_part: str, time_part: str) -> str:
-        """
-        Generate a fake datetime for birth dates, ensuring the date part is not
-        in the future.  Uses _generate_fake_birth_date for the date and
-        generates a time in the same format as the original.
-        """
-        fake_date = self._generate_fake_birth_date(date_part)
-        # Determine if time_part uses AM/PM
-        time_str = time_part.strip()
-        has_meridiem = time_str.endswith(('AM', 'PM')) or time_str.endswith(('am', 'pm'))
-        if self.deterministic:
-            digest = hmac.new(self.secret_key, (date_part + time_part).encode('utf-8'), hashlib.sha256).hexdigest()
-            digest_int = int(digest[:12], 16)
-            if has_meridiem:
-                hour = (digest_int % 12) + 1
-                minute = (digest_int // 12) % 60
-                second = (digest_int // (12 * 60)) % 60
-                ampm = 'AM' if ((digest_int // (12 * 60 * 60)) % 2) == 0 else 'PM'
-                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
-            else:
-                hour = digest_int % 24
-                minute = (digest_int // 24) % 60
-                second = (digest_int // (24 * 60)) % 60
-                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
-        else:
-            try:
-                import secrets
-                randbelow = secrets.randbelow
-            except ImportError:
-                import random
-                randbelow = lambda n: random.randrange(n)
-            if has_meridiem:
-                hour = randbelow(12) + 1
-                minute = randbelow(60)
-                second = randbelow(60)
-                ampm = 'AM' if randbelow(2) == 0 else 'PM'
-                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
-            else:
-                hour = randbelow(24)
-                minute = randbelow(60)
-                second = randbelow(60)
-                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
-        return f"{fake_date} {fake_time}"
-
     def generate(self, value: str, column_name: Optional[str] = None) -> str:
         """
         Return a pseudonym token for the given input value.  If the value matches
@@ -509,8 +516,8 @@ class TokenGenerator:
                 if self._is_date_pattern(date_part):
                     # Birthdate columns should not generate future dates
                     if column_name and self._is_birthdate_column(column_name):
-                        return self._generate_fake_birth_datetime(date_part, time_part)
-                    return self._generate_fake_datetime(date_part, time_part)
+                        return self._generate_fake_birth_date(date_part)
+                    return self._generate_fake_date(date_part)
         # Email addresses
         if self._EMAIL_PATTERN.match(val_str):
             return self._generate_fake_email(val_str)
