@@ -55,6 +55,12 @@ class TokenGenerator:
     _EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
     _PHONE_PATTERN = re.compile(r"^(\+?\d{1,3}[\s\-]?)?(\(\d{1,4}\)[\s\-]?)?\d{3,4}[\s\-]?\d{3,4}$")
     _SSN_PATTERN = re.compile(r"^\d{3}-\d{2}-\d{4}$")
+    # Name pattern: at least two words consisting of letters separated by whitespace
+    _NAME_PATTERN = re.compile(r"^[A-Za-z]+(?:\s+[A-Za-z]+)+$")
+    # Date patterns: match common date formats with digits and separators
+    # Supported formats: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, DD/MM/YYYY, MM/DD/YYYY
+    _DATE_SEPARATOR_PATTERN = re.compile(r"[\-/.]")
+
 
     def __init__(self, deterministic: bool = False, secret_key: Optional[bytes] = None):
         self.deterministic = deterministic
@@ -106,6 +112,135 @@ class TokenGenerator:
             local = uuid.uuid4().hex[:local_length]
         return f"{local}@anonymized.local"
 
+    def _generate_fake_name(self, value: str) -> str:
+        """
+        Generate a fake full name.  The number of name parts (e.g. first and last
+        names) will match the original.  Names are selected from fixed lists of
+        common first and last names.  Deterministic mode uses the HMAC digest to
+        choose names so the same original name yields the same pseudonym.
+        """
+        # Predefined lists of names.  In a real application these could be
+        # extended or loaded from external resources.
+        first_names = [
+            'Alex', 'Jordan', 'Taylor', 'Casey', 'Morgan', 'Jamie', 'Cameron',
+            'Riley', 'Sam', 'Charlie', 'Dakota', 'Reese', 'Robin', 'Avery',
+            'Drew', 'Hayden'
+        ]
+        last_names = [
+            'Smith', 'Johnson', 'Taylor', 'Brown', 'Anderson', 'Clark', 'Harris',
+            'Lee', 'Wilson', 'Martin', 'Thompson', 'Lewis', 'Walker', 'Young',
+            'Hall', 'Allen'
+        ]
+        parts = value.split()
+        num_parts = len(parts)
+        names: List[str] = []
+        if self.deterministic:
+            # Use HMAC digest to deterministically select names
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            # Each part uses a 4‑hex‑digit chunk to compute an index
+            for i in range(num_parts):
+                chunk = digest[(i * 4):(i * 4) + 4]
+                index = int(chunk, 16)
+                if i == num_parts - 1:
+                    # Last part uses last_names list
+                    names.append(last_names[index % len(last_names)])
+                else:
+                    names.append(first_names[index % len(first_names)])
+        else:
+            try:
+                import secrets
+                rng_choice = secrets.choice
+            except ImportError:
+                import random
+                rng_choice = random.choice
+            for i in range(num_parts):
+                if i == num_parts - 1:
+                    names.append(rng_choice(last_names))
+                else:
+                    names.append(rng_choice(first_names))
+        return ' '.join(names)
+
+    def _is_date_pattern(self, val_str: str) -> bool:
+        """
+        Determine if the given string appears to be a date in a common numeric format.
+        Returns True for patterns such as YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY, with
+        consistent separators (-, / or .).
+        """
+        # Split on date separators
+        sep_match = self._DATE_SEPARATOR_PATTERN.search(val_str)
+        if not sep_match:
+            return False
+        sep = sep_match.group()
+        parts = val_str.split(sep)
+        if len(parts) != 3:
+            return False
+        # All parts must be digits
+        if not all(part.isdigit() for part in parts):
+            return False
+        # Check for one part with four digits (year)
+        length_counts = [len(part) for part in parts]
+        if 4 not in length_counts:
+            return False
+        # At least one other part should be <= 2 digits
+        # This simple check will treat many numeric codes as dates; for more
+        # precise detection, additional context would be required.
+        return True
+
+    def _generate_fake_date(self, value: str) -> str:
+        """
+        Generate a fake date with the same separator and order as the original.
+        Supported orders include YYYY-MM-DD, DD/MM/YYYY and MM/DD/YYYY.  Dates
+        are generated within a 100‑year window starting from 1970.  Deterministic
+        mode uses the HMAC digest to select a date.
+        """
+        import datetime
+        sep_match = self._DATE_SEPARATOR_PATTERN.search(value)
+        if not sep_match:
+            # Fallback: return hashed value or random
+            return self.generate(value)
+        sep = sep_match.group()
+        parts = value.split(sep)
+        # Determine pattern: identify which part is year
+        year_index = parts.index(next(p for p in parts if len(p) == 4))
+        # Base date and range for generating random dates (100 years from 1970)
+        base_date = datetime.date(1970, 1, 1)
+        days_range = 365 * 100  # 100 years
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            # Use first 12 hex digits to create an integer
+            digest_int = int(digest[:12], 16)
+            offset = digest_int % days_range
+        else:
+            try:
+                import secrets
+                offset = secrets.randbelow(days_range)
+            except ImportError:
+                import random
+                offset = random.randrange(days_range)
+        new_date = base_date + datetime.timedelta(days=offset)
+        y = new_date.year
+        m = new_date.month
+        d = new_date.day
+        # Reconstruct based on original order
+        # If year is first (index 0)
+        if year_index == 0:
+            # Format year-month-day
+            return f"{y:04d}{sep}{m:02d}{sep}{d:02d}"
+        # If year is last (index 2)
+        elif year_index == 2:
+            # Determine if day or month comes first by checking original month/day values
+            # If original first part > 12, treat as day-first; else month-first
+            first_num = int(parts[0])
+            if first_num > 12:
+                # Day-month-year
+                return f"{d:02d}{sep}{m:02d}{sep}{y:04d}"
+            else:
+                # Month-day-year
+                return f"{m:02d}{sep}{d:02d}{sep}{y:04d}"
+        else:
+            # Unexpected pattern (year in middle); default to ISO
+            return f"{y:04d}{sep}{m:02d}{sep}{d:02d}"
+
     def generate(self, value: str) -> str:
         """
         Return a pseudonym token for the given input value.  If the value matches
@@ -138,6 +273,12 @@ class TokenGenerator:
             else:
                 digits = self._generate_random_digits(digit_count)
             return self._apply_numeric_pattern(val_str, digits)
+        # Name pattern
+        if self._NAME_PATTERN.match(val_str):
+            return self._generate_fake_name(val_str)
+        # Date pattern
+        if self._is_date_pattern(val_str):
+            return self._generate_fake_date(val_str)
         # Default: use deterministic digest or random UUID
         if self.deterministic:
             digest = hmac.new(self.secret_key, val_str.encode('utf-8'), hashlib.sha256).hexdigest()
