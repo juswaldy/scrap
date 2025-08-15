@@ -40,7 +40,21 @@ import pandas as pd
 
 
 class TokenGenerator:
-    """Generates pseudonym tokens for string values."""
+    """
+    Generates pseudonym tokens for string values.
+
+    This implementation attempts to produce type‑appropriate tokens.  For example,
+    email addresses will be replaced by fake email addresses and phone numbers
+    will be replaced by randomly generated phone numbers with the same pattern.
+    If deterministic mode is enabled, tokens are derived from an HMAC of the
+    original value so the same input always yields the same pseudonym.  The
+    caller must still store a mapping to reverse tokens back to original values.
+    """
+
+    # Regular expressions for detecting data types
+    _EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+    _PHONE_PATTERN = re.compile(r"^(\+?\d{1,3}[\s\-]?)?(\(\d{1,4}\)[\s\-]?)?\d{3,4}[\s\-]?\d{3,4}$")
+    _SSN_PATTERN = re.compile(r"^\d{3}-\d{2}-\d{4}$")
 
     def __init__(self, deterministic: bool = False, secret_key: Optional[bytes] = None):
         self.deterministic = deterministic
@@ -49,10 +63,84 @@ class TokenGenerator:
                 raise ValueError("secret_key is required for deterministic token generation")
             self.secret_key = secret_key
 
-    def generate(self, value: str) -> str:
-        """Return a pseudonym token for the given input value."""
+    def _generate_random_digits(self, length: int) -> str:
+        """Generate a string of random numeric digits of the given length."""
+        # Use secrets if available for stronger randomness
+        try:
+            import secrets
+            return ''.join(str(secrets.randbelow(10)) for _ in range(length))
+        except ImportError:
+            return ''.join(str(uuid.uuid4().int % 10) for _ in range(length))
+
+    def _generate_deterministic_digits(self, value: str, length: int) -> str:
+        """Generate a deterministic numeric string based on an HMAC digest of the value."""
+        digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+        # Convert hex digest to a numeric string by mapping hex chars to digits
+        digits = ''.join(str(int(ch, 16) % 10) for ch in digest)
+        # Repeat the digits string if it's shorter than required
+        while len(digits) < length:
+            digest = hashlib.sha256(digest.encode('utf-8')).hexdigest()
+            digits += ''.join(str(int(ch, 16) % 10) for ch in digest)
+        return digits[:length]
+
+    def _apply_numeric_pattern(self, pattern: str, digits: str) -> str:
+        """Fill a numeric pattern (with non-digit separators) using the provided digits."""
+        result_chars = []
+        digit_index = 0
+        for ch in pattern:
+            if ch.isdigit():
+                result_chars.append(digits[digit_index])
+                digit_index += 1
+            else:
+                result_chars.append(ch)
+        return ''.join(result_chars)
+
+    def _generate_fake_email(self, value: str) -> str:
+        """Generate a fake email address.  Keeps the domain generic to avoid revealing information."""
+        # Determine local part length from original or default to 8
+        local_length = 8
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            local = digest[:local_length]
+        else:
+            local = uuid.uuid4().hex[:local_length]
+        return f"{local}@anonymized.local"
+
+    def generate(self, value: str) -> str:
+        """
+        Return a pseudonym token for the given input value.  If the value matches
+        known PII types (email, phone number, SSN), a type‑appropriate pseudonym
+        will be generated.  Otherwise a hexadecimal token is returned.  In
+        deterministic mode, tokens are reproducible for the same input.
+        """
+        if value is None:
+            return value
+        # Normalize to string for pattern matching
+        val_str = str(value)
+        # Email addresses
+        if self._EMAIL_PATTERN.match(val_str):
+            return self._generate_fake_email(val_str)
+        # SSN pattern
+        if self._SSN_PATTERN.match(val_str):
+            num_digits = 9  # SSN has nine digits
+            if self.deterministic:
+                digits = self._generate_deterministic_digits(val_str, num_digits)
+            else:
+                digits = self._generate_random_digits(num_digits)
+            # Format as ###-##-####
+            return f"{digits[:3]}-{digits[3:5]}-{digits[5:]}"
+        # Phone number pattern (may contain country code and separators)
+        if self._PHONE_PATTERN.match(val_str):
+            # Count number of digit positions in the phone number
+            digit_count = sum(ch.isdigit() for ch in val_str)
+            if self.deterministic:
+                digits = self._generate_deterministic_digits(val_str, digit_count)
+            else:
+                digits = self._generate_random_digits(digit_count)
+            return self._apply_numeric_pattern(val_str, digits)
+        # Default: use deterministic digest or random UUID
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, val_str.encode('utf-8'), hashlib.sha256).hexdigest()
             return digest
         else:
             return uuid.uuid4().hex
