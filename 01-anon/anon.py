@@ -241,7 +241,149 @@ class TokenGenerator:
             # Unexpected pattern (year in middle); default to ISO
             return f"{y:04d}{sep}{m:02d}{sep}{d:02d}"
 
-    def generate(self, value: str) -> str:
+    def _is_id_column(self, column_name: str) -> bool:
+        """
+        Determine whether a column name indicates an identifier (ID) column.  A
+        column is considered an ID column if its name ends with 'Id' (case‑
+        sensitive), 'ID' or '_id' (case‑insensitive).  This follows the
+        specification that names ending with these suffixes are IDs (e.g.
+        'UserId', 'sessionID', 'account_id').  Ordinary words like 'grid' are
+        not matched because they end with lowercase 'id'.
+        """
+        if not column_name:
+            return False
+        name = column_name
+        lower_name = name.lower()
+        # Columns ending in '_id' (case-insensitive)
+        if lower_name.endswith('_id'):
+            return True
+        # Columns ending exactly with 'Id' (capital I, lowercase d)
+        if name.endswith('Id'):
+            return True
+        # Columns ending exactly with 'ID' (both uppercase)
+        if name.endswith('ID'):
+            return True
+        return False
+
+    def _generate_id_token(self, value: str) -> str:
+        """Generate an 8‑character token for ID columns."""
+        if self.deterministic:
+            # Use HMAC digest and take first 8 characters
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            return digest[:8]
+        else:
+            return uuid.uuid4().hex[:8]
+
+    def _get_name_type_from_column(self, column_name: Optional[str]) -> Optional[str]:
+        """
+        Infer whether a name column represents a first name, last name or full name
+        based on the column name.  Returns 'first', 'last', or None for unknown.
+        """
+        if not column_name:
+            return None
+        lower = column_name.lower()
+        # Define keywords indicating first and last names
+        first_keywords = ['first', 'given']
+        last_keywords = ['last', 'surname', 'family']
+        # Remove common separators
+        tokens = re.split(r'[_\s]', lower)
+        for token in tokens:
+            if token in first_keywords:
+                return 'first'
+            if token in last_keywords:
+                return 'last'
+        return None
+
+    def _generate_first_name(self, value: str) -> str:
+        """Generate a fake first name."""
+        first_names = [
+            'Alex', 'Jordan', 'Taylor', 'Casey', 'Morgan', 'Jamie', 'Cameron',
+            'Riley', 'Sam', 'Charlie', 'Dakota', 'Reese', 'Robin', 'Avery',
+            'Drew', 'Hayden'
+        ]
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            index = int(digest[:4], 16) % len(first_names)
+            return first_names[index]
+        else:
+            try:
+                import secrets
+                return secrets.choice(first_names)
+            except ImportError:
+                import random
+                return random.choice(first_names)
+
+    def _generate_last_name(self, value: str) -> str:
+        """Generate a fake last name."""
+        last_names = [
+            'Smith', 'Johnson', 'Taylor', 'Brown', 'Anderson', 'Clark', 'Harris',
+            'Lee', 'Wilson', 'Martin', 'Thompson', 'Lewis', 'Walker', 'Young',
+            'Hall', 'Allen'
+        ]
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            index = int(digest[:4], 16) % len(last_names)
+            return last_names[index]
+        else:
+            try:
+                import secrets
+                return secrets.choice(last_names)
+            except ImportError:
+                import random
+                return random.choice(last_names)
+
+    def _generate_fake_datetime(self, date_part: str, time_part: str) -> str:
+        """
+        Generate a fake datetime string preserving the date and time formats.
+        The date part is generated via _generate_fake_date.  The time part is
+        generated in the same format (12‑hour with AM/PM or 24‑hour).  In
+        deterministic mode, the time is derived from the HMAC digest; otherwise
+        it is random.
+        """
+        # Generate fake date for the date part
+        fake_date = self._generate_fake_date(date_part)
+        # Determine if time_part uses AM/PM
+        time_str = time_part.strip()
+        has_meridiem = time_str.endswith(('AM', 'PM')) or time_str.endswith(('am', 'pm'))
+        # Generate time
+        if self.deterministic:
+            # Use digest to generate time deterministically
+            digest = hmac.new(self.secret_key, (date_part + time_part).encode('utf-8'), hashlib.sha256).hexdigest()
+            digest_int = int(digest[:12], 16)
+            if has_meridiem:
+                # 12-hour format with AM/PM
+                hour = (digest_int % 12) + 1  # 1-12
+                minute = (digest_int // 12) % 60
+                second = (digest_int // (12 * 60)) % 60
+                ampm = 'AM' if ((digest_int // (12 * 60 * 60)) % 2) == 0 else 'PM'
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
+            else:
+                # 24-hour format
+                hour = digest_int % 24
+                minute = (digest_int // 24) % 60
+                second = (digest_int // (24 * 60)) % 60
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
+        else:
+            try:
+                import secrets
+                randbelow = secrets.randbelow
+            except ImportError:
+                import random
+                randbelow = lambda n: random.randrange(n)
+            if has_meridiem:
+                hour = randbelow(12) + 1
+                minute = randbelow(60)
+                second = randbelow(60)
+                ampm = 'AM' if randbelow(2) == 0 else 'PM'
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
+            else:
+                hour = randbelow(24)
+                minute = randbelow(60)
+                second = randbelow(60)
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
+        return f"{fake_date} {fake_time}"
+
+    def generate(self, value: str, column_name: Optional[str] = None) -> str:
         """
         Return a pseudonym token for the given input value.  If the value matches
         known PII types (email, phone number, SSN), a type‑appropriate pseudonym
@@ -252,6 +394,17 @@ class TokenGenerator:
             return value
         # Normalize to string for pattern matching
         val_str = str(value)
+        # ID columns: generate short token
+        if column_name and self._is_id_column(column_name):
+            return self._generate_id_token(val_str)
+        # Detect date with time (value contains a space separating date and time)
+        if ' ' in val_str:
+            parts = val_str.split()
+            if parts:
+                date_part = parts[0]
+                time_part = ' '.join(parts[1:])
+                if self._is_date_pattern(date_part):
+                    return self._generate_fake_datetime(date_part, time_part)
         # Email addresses
         if self._EMAIL_PATTERN.match(val_str):
             return self._generate_fake_email(val_str)
@@ -273,8 +426,16 @@ class TokenGenerator:
             else:
                 digits = self._generate_random_digits(digit_count)
             return self._apply_numeric_pattern(val_str, digits)
-        # Name pattern
-        if self._NAME_PATTERN.match(val_str):
+        # Name detection
+        # Determine if this value should be treated as a name.  We treat a value
+        # as a name if it contains at least one space (full name pattern) or if
+        # the column name indicates first or last name.
+        name_type = self._get_name_type_from_column(column_name)
+        if self._NAME_PATTERN.match(val_str) or name_type in ('first', 'last'):
+            if name_type == 'first':
+                return self._generate_first_name(val_str)
+            if name_type == 'last':
+                return self._generate_last_name(val_str)
             return self._generate_fake_name(val_str)
         # Date pattern
         if self._is_date_pattern(val_str):
@@ -307,7 +468,8 @@ class Pseudonymizer:
             for original_value in df[column].dropna().unique():
                 original_str = str(original_value)
                 if original_str not in col_mapping:
-                    token = self.token_generator.generate(original_str)
+                    # Pass column name to token generator for context (e.g. ID, name detection)
+                    token = self.token_generator.generate(original_str, column_name=column)
                     col_mapping[original_str] = token
             # Replace column values with tokens
             result[column] = df[column].astype(str).map(col_mapping)
