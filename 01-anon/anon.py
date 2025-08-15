@@ -779,50 +779,6 @@ class TokenGenerator:
         else:
             return f"{y:04d}{sep}{m:02d}{sep}{d:02d}"
 
-    def _generate_fake_birth_datetime(self, date_part: str, time_part: str) -> str:
-        """
-        Generate a fake datetime for birth dates, ensuring the date part is not
-        in the future.  Uses _generate_fake_birth_date for the date and
-        generates a time in the same format as the original.
-        """
-        fake_date = self._generate_fake_birth_date(date_part)
-        # Determine if time_part uses AM/PM
-        time_str = time_part.strip()
-        has_meridiem = time_str.endswith(('AM', 'PM')) or time_str.endswith(('am', 'pm'))
-        if self.deterministic:
-            digest = hmac.new(self.secret_key, (date_part + time_part).encode('utf-8'), hashlib.sha256).hexdigest()
-            digest_int = int(digest[:12], 16)
-            if has_meridiem:
-                hour = (digest_int % 12) + 1
-                minute = (digest_int // 12) % 60
-                second = (digest_int // (12 * 60)) % 60
-                ampm = 'AM' if ((digest_int // (12 * 60 * 60)) % 2) == 0 else 'PM'
-                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
-            else:
-                hour = digest_int % 24
-                minute = (digest_int // 24) % 60
-                second = (digest_int // (24 * 60)) % 60
-                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
-        else:
-            try:
-                import secrets
-                randbelow = secrets.randbelow
-            except ImportError:
-                import random
-                randbelow = lambda n: random.randrange(n)
-            if has_meridiem:
-                hour = randbelow(12) + 1
-                minute = randbelow(60)
-                second = randbelow(60)
-                ampm = 'AM' if randbelow(2) == 0 else 'PM'
-                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
-            else:
-                hour = randbelow(24)
-                minute = randbelow(60)
-                second = randbelow(60)
-                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
-        return f"{fake_date} {fake_time}"
-
     def generate(self, value: str, column_name: Optional[str] = None) -> str:
         """
         Return a pseudonym token for the given input value.  If the value matches
@@ -846,8 +802,8 @@ class TokenGenerator:
                 if self._is_date_pattern(date_part):
                     # Birthdate columns should not generate future dates
                     if column_name and self._is_birthdate_column(column_name):
-                        return self._generate_fake_birth_datetime(date_part, time_part)
-                    return self._generate_fake_datetime(date_part, time_part)
+                        return self._generate_fake_birth_date(date_part)
+                    return self._generate_fake_date(date_part)
         # Email addresses
         if self._EMAIL_PATTERN.match(val_str):
             return self._generate_fake_email(val_str)
