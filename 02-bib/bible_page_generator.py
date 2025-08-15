@@ -473,6 +473,9 @@ def generate_latex_page(
     # Build the LaTeX document
     lines: List[str] = []
     lines.append(r'\documentclass[12pt]{article}')
+    # Set page size and margins before loading bidi.  This must come
+    # immediately after the documentclass to avoid bidi/geometry conflicts.
+    lines.append(r'\usepackage[paperwidth=5.5in,paperheight=8.5in,margin=0.3in]{geometry}')
     # fontspec allows selection of TrueType/OpenType fonts with XeLaTeX or LuaLaTeX
     lines.append(r'\usepackage{fontspec}')
     # expl3 is required by bidi/polyglossia on some TeX installations
@@ -485,11 +488,6 @@ def generate_latex_page(
     # \setdefaultlanguage{english} and \setotherlanguage{hebrew} yourself.
     # Use a common Hebrew font if available; adjust as necessary.
     lines.append(rf'\newfontfamily\hebrewfont[Script=Hebrew]{{{hebrew_font}}}')
-
-    # Set page size and margins.  A compact trim size of 5.5×8.5 inches with
-    # 0.3 inch margins on all sides is used by default.  Adjust these
-    # values via the geometry package if needed.
-    lines.append(r'\usepackage[paperwidth=5.5in,paperheight=8.5in,margin=0.3in]{geometry}')
     lines.append('')
     lines.append(r'\begin{document}')
     # Header
@@ -502,15 +500,19 @@ def generate_latex_page(
     lines.append('')
     # Main text: iterate over verses
     lines.append(r'\begin{RTL}')  # right‑to‑left environment
+    # When the chapter changes, print the chapter:verse label on the first verse.
+    prev_chapter: Optional[int] = None
     for verse in verses:
-        # Print verse number at the right margin in boldface
-        vnum = verse.verse_number
+        # Determine the label: include chapter number when the chapter changes
+        if prev_chapter is None or prev_chapter != verse.chapter_number:
+            label = f"{verse.chapter_number}:{verse.verse_number}"
+        else:
+            label = f"{verse.verse_number}"
+        prev_chapter = verse.chapter_number
         # Start a new line for each verse
         lines.append(r'\noindent')
-        # Print verse number in a box similar to the printed edition
-        # Output the verse number in bold.  We avoid the \Arabic macro here
-        # because it expects a counter rather than a literal number.
-        lines.append(rf'\textbf{{{vnum}}} ')
+        # Print the verse (or chapter:verse) number in bold
+        lines.append(rf'\textbf{{{label}}} ')
         # Print words with footnote markers; separate by spaces
         word_parts: List[str] = []
         for word in verse.words:
@@ -520,7 +522,8 @@ def generate_latex_page(
             escaped_text = escape_latex(clean_text)
             marker = ''
             if word.footnote_number is not None:
-                marker = rf'\textsuperscript{{{word.footnote_number}}}'
+                # Make the footnote marker smaller by wrapping it in \scriptsize
+                marker = rf'\textsuperscript{{\scriptsize {word.footnote_number}}}'
             # Wrap Hebrew text in \hebrewfont to ensure proper glyphs
             word_parts.append(rf'{{\hebrewfont {escaped_text}}}{marker}')
         # Join the words with spaces
@@ -529,7 +532,11 @@ def generate_latex_page(
     lines.append('')
     # Footnote apparatus: print each unique footnote once, in order of footnote number
     lines.append(r'\vspace{1em}')
-    lines.append(r'\begin{footnotesize}')
+    # Use a very small font for the footnote apparatus so that long
+    # definitions consume less vertical space.  We choose ``tiny``
+    # rather than ``scriptsize`` here to satisfy the requirement that
+    # footnote text be “a lot smaller” than the main body text.
+    lines.append(r'\begin{tiny}')
     # Build a dict of footnote numbers to texts
     footnotes: Dict[int, str] = {}
     for verse in verses:
@@ -538,8 +545,11 @@ def generate_latex_page(
                 footnotes[word.footnote_number] = word.footnote_text
     for fn in sorted(footnotes.keys()):
         ft_esc = escape_latex(footnotes[fn])
+        # Put the footnote reference number in superscript.  The
+        # surrounding font size is tiny, but we leave the number itself
+        # unscaled to maintain legibility at this small size.
         lines.append(rf'\textsuperscript{{{fn}}} {ft_esc}\\')
-    lines.append(r'\end{footnotesize}')
+    lines.append(r'\end{tiny}')
     lines.append(r'\end{document}')
     return '\n'.join(lines)
 
