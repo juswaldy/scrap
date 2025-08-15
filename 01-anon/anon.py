@@ -61,10 +61,10 @@ class TokenGenerator:
     # Supported formats: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, DD/MM/YYYY, MM/DD/YYYY
     _DATE_SEPARATOR_PATTERN = re.compile(r"[\-/.]")
 
-    # Pools of first and last names used for pseudonymisation.  Each pool
-    # contains at least 150 entries to ensure a wide variety of pseudonyms.
-    # These lists are defined at class level so that all methods refer to the
-    # same pools and to avoid duplicating the definitions.
+    # Pools of names for pseudonymisation.  Each pool contains at least 150
+    # entries to ensure a wide variety of generated names.  These lists are
+    # deliberately gender‑neutral and draw from common names.  The lists can
+    # be extended or replaced as desired.
     FIRST_NAME_POOL: List[str] = [
         'Alex', 'Jordan', 'Taylor', 'Casey', 'Morgan', 'Jamie', 'Cameron',
         'Riley', 'Sam', 'Charlie', 'Dakota', 'Reese', 'Robin', 'Avery',
@@ -85,7 +85,11 @@ class TokenGenerator:
         'Dylan', 'Emery', 'Grayson', 'Harley', 'Landon', 'Lennox', 'Lexi',
         'Micah', 'Payton', 'Piper', 'Quincy', 'West', 'Zion', 'Paxton',
         'Remy', 'Bowie', 'Sloane', 'Arlo', 'Bellamy', 'Indigo', 'Jess',
-        'Kirby', 'Lux', 'Mack', 'Nico', 'Orion'
+        'Kirby', 'Lux', 'Mack', 'Nico', 'Orion',
+        # Additional names to bring the pool to at least 150 entries
+        'Blair', 'Cecil', 'Darby', 'Ellery', 'Genesis', 'Hollis', 'Keaton',
+        'Linden', 'Marion', 'Nevada', 'Oak', 'Ramsey', 'Shelby', 'Urban',
+        'Yael', 'Zephyr'
     ]
     LAST_NAME_POOL: List[str] = [
         'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia',
@@ -114,10 +118,36 @@ class TokenGenerator:
         'Reece', 'Perkins', 'Pearson', 'Hawkins', 'Dean', 'Austin',
         'Spencer', 'Swanson', 'Hoffman', 'Little', 'Carlson', 'Stanley'
     ]
+    # Pool of common email domains used when better_email is enabled.  This list
+    # contains 40 widely used email providers to produce realistic fake
+    # addresses.  The pool may be customised as required.
+    EMAIL_DOMAIN_POOL: List[str] = [
+        'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com',
+        'icloud.com', 'protonmail.com', 'msn.com', 'live.com', 'me.com',
+        'comcast.net', 'verizon.net', 'att.net', 'yandex.com', 'mail.com',
+        'zoho.com', 'gmx.com', 'hushmail.com', 'mail.ru', 'qq.com',
+        '163.com', '126.com', 'sina.com', 'outlook.co.uk', 'mail.ee',
+        'orange.fr', 'btinternet.com', 'sky.com', 'googlemail.com',
+        'yahoo.co.uk', 'ymail.com', 'rocketmail.com', 'mailinator.com',
+        'fastmail.com', 'posteo.de', 'libero.it', 'tin.it', 'naver.com',
+        'seznam.cz', 'wp.pl', 'o2.co.uk'
+    ]
 
 
-    def __init__(self, deterministic: bool = False, secret_key: Optional[bytes] = None):
+    def __init__(self, deterministic: bool = False, secret_key: Optional[bytes] = None, better_email: bool = False):
+        """
+        Create a new TokenGenerator.
+
+        :param deterministic: If true, tokens are derived deterministically from
+            an HMAC of the original value using the provided secret key.  If
+            false, random values are used.
+        :param secret_key: Secret key used for HMAC in deterministic mode.
+        :param better_email: When true, fake emails are generated using a pool
+            of common domains and more personal account names.  When false,
+            emails are generated with a simple hash and a generic domain.
+        """
         self.deterministic = deterministic
+        self.better_email = better_email
         if deterministic:
             if not secret_key:
                 raise ValueError("secret_key is required for deterministic token generation")
@@ -156,37 +186,79 @@ class TokenGenerator:
         return ''.join(result_chars)
 
     def _generate_fake_email(self, value: str) -> str:
-        """Generate a fake email address.  Keeps the domain generic to avoid revealing information."""
-        # Determine local part length from original or default to 8
-        local_length = 8
+        """Generate a fake email address.
+
+        If ``better_email`` is disabled, the local part is an 8‑character
+        hexadecimal digest (or random UUID) and the domain is a generic
+        ``anonymized.local``.  When ``better_email`` is enabled, the local
+        part is constructed from randomly (or deterministically) selected
+        first and last names from the name pools, producing a more personal
+        username (e.g. ``alex.smith``).  The domain is chosen from a pool of
+        common email providers.  Deterministic mode ensures the same email
+        pseudonym for the same input value.
+        """
+        # When better_email is not enabled, fall back to simple hex local and
+        # generic domain
+        if not self.better_email:
+            local_length = 8
+            if self.deterministic:
+                digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+                local = digest[:local_length]
+            else:
+                local = uuid.uuid4().hex[:local_length]
+            return f"{local}@anonymized.local"
+        # better_email mode: build a more personal email address
+        first_pool = self.FIRST_NAME_POOL
+        last_pool = self.LAST_NAME_POOL
+        domain_pool = self.EMAIL_DOMAIN_POOL
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            local = digest[:local_length]
+            # Use successive 4‑hex‑digit chunks to select the first name, last
+            # name and domain
+            idx_first = int(digest[:4], 16) % len(first_pool)
+            idx_last = int(digest[4:8], 16) % len(last_pool)
+            idx_domain = int(digest[8:12], 16) % len(domain_pool)
+            first = first_pool[idx_first].lower()
+            last = last_pool[idx_last].lower()
+            local = f"{first}.{last}"
+            domain = domain_pool[idx_domain]
         else:
-            local = uuid.uuid4().hex[:local_length]
-        return f"{local}@anonymized.local"
+            try:
+                import secrets
+                rng_choice = secrets.choice
+            except ImportError:
+                import random
+                rng_choice = random.choice
+            first = rng_choice(first_pool).lower()
+            last = rng_choice(last_pool).lower()
+            # Assemble local part; optionally add a two‑digit number to increase variety
+            local = f"{first}.{last}"
+            domain = rng_choice(domain_pool)
+        # Ensure the local part contains only valid characters
+        local = re.sub(r'[^a-z0-9._+-]', '', local)
+        return f"{local}@{domain}"
 
     def _generate_fake_name(self, value: str) -> str:
         """
-        Generate a fake full name.  The number of name parts in the original
-        value (e.g. first, middle and last) will be preserved.  The generator
-        uses large pools of first and last names (150 entries each) to produce
-        realistic pseudonyms.  Intermediate name parts (e.g. middle names) are
-        drawn from the first name pool.  In deterministic mode, the same
-        original name always yields the same pseudonym by deriving indices from
-        the HMAC of the original value.
+        Generate a fake full name.  The number of name parts (e.g. first and last
+        names) will match the original.  Names are selected from fixed lists of
+        common first and last names.  Deterministic mode uses the HMAC digest to
+        choose names so the same original name yields the same pseudonym.
         """
-        # Refer to the class‑level name pools rather than locally defined lists.
+        # Use the configured name pools to generate a fake full name.  The
+        # number of name parts (e.g. first, middle, last) in the original
+        # value is preserved.  Middle name components are drawn from the
+        # first name pool, while the last component is drawn from the last
+        # name pool.
         first_names = self.FIRST_NAME_POOL
         last_names = self.LAST_NAME_POOL
         parts = value.split()
         num_parts = len(parts)
         names: List[str] = []
         if self.deterministic:
-            # Use HMAC digest to deterministically select names.  Each part of
-            # the original name consumes a 4‑hex‑digit chunk of the digest to
-            # compute an index.  The last part is drawn from the surname pool,
-            # all preceding parts are drawn from the first name pool.
+            # Use HMAC digest to deterministically select names.  Each name
+            # component consumes a 4‑hex‑digit chunk of the digest to compute
+            # an index into the respective name pool.
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
             for i in range(num_parts):
                 chunk = digest[(i * 4):(i * 4) + 4]
@@ -331,8 +403,8 @@ class TokenGenerator:
         if not column_name:
             return None
         lower = column_name.lower()
-        # Define keywords indicating first, middle and last names.  Middle names
-        # are treated the same as first names for pseudonymisation purposes.
+        # Define keywords indicating first, middle and last names.  Middle
+        # names are treated as first names for pseudonymisation purposes.
         first_keywords = ['first', 'given', 'middle']
         last_keywords = ['last', 'surname', 'family']
         # Remove common separators
@@ -347,7 +419,8 @@ class TokenGenerator:
         return None
 
     def _generate_first_name(self, value: str) -> str:
-        """Generate a fake first name from the configured pool of first names."""
+        """Generate a fake first name."""
+        # Use the shared first name pool for generating a fake first or middle name
         names = self.FIRST_NAME_POOL
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
@@ -362,7 +435,8 @@ class TokenGenerator:
                 return random.choice(names)
 
     def _generate_last_name(self, value: str) -> str:
-        """Generate a fake last name from the configured pool of last names."""
+        """Generate a fake last name."""
+        # Use the shared last name pool for generating a fake surname
         names = self.LAST_NAME_POOL
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
@@ -454,17 +528,16 @@ class TokenGenerator:
         parts = value.split(sep)
         # Identify the year position
         year_index = parts.index(next(p for p in parts if len(p) == 4))
-        # Set range: 1900-01-01 to a date at least 18 years prior to today.
+        # Set range: 1900-01-01 to a date at least 18 years before today
         base_date = datetime.date(1900, 1, 1)
         today = datetime.date.today()
-        # Determine the latest allowable birthdate such that the person is at
-        # least 18 years old.  Using replace to subtract years preserves the
-        # month/day semantics; if today is 29 Feb and the target year is not
-        # leap, fallback to 28 Feb.
+        # Calculate the latest allowable date such that the person is at least
+        # 18 years old.  Use replace to subtract years while preserving the
+        # month/day; handle February 29 in non‑leap years by falling back to
+        # February 28.
         try:
             end_date = today.replace(year=today.year - 18)
         except ValueError:
-            # Handle February 29 in non-leap years by setting day to 28
             end_date = today.replace(year=today.year - 18, day=28)
         days_range = (end_date - base_date).days + 1
         if self.deterministic:
