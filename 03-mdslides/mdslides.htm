@@ -291,6 +291,8 @@
         .preview-container { height: 65vh; }
       }
     </style>
+    <!-- Include Mermaid library for diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   </head>
   <body>
     <div class="app">
@@ -460,6 +462,30 @@
           index = Math.max(0, Math.min(slides.length - 1, i));
           dom.currentSlide.innerHTML = slides[index] || '';
           updateHud();
+          // If mermaid library is loaded, render any diagrams in the current slide
+          if (window.mermaid) {
+            // Determine the mermaid theme based on the current application theme
+            const themeAttr = document.documentElement.getAttribute('data-theme');
+            const mmTheme = themeAttr === 'dark' ? 'dark' : 'default';
+            try {
+              // Find mermaid blocks only within the current slide
+              const mermaidEls = dom.currentSlide.querySelectorAll('.mermaid');
+              if (mermaidEls.length > 0) {
+                // Update the mermaid configuration for the current theme
+                mermaid.initialize({ startOnLoad: false, theme: mmTheme });
+                // Ensure each mermaid element has a unique id
+                mermaidEls.forEach((el, idx) => {
+                  if (!el.id) {
+                    el.id = 'mermaid-' + Date.now() + '-' + idx;
+                  }
+                });
+                // Render all diagrams in this slide
+                mermaid.init(undefined, mermaidEls);
+              }
+            } catch (err) {
+              console.error('Mermaid render error:', err);
+            }
+          }
         }
 
         function updateHud() {
@@ -511,7 +537,14 @@
           const codeBlocks = [];
           text = text.replace(/```(\w+)?\n([\s\S]*?)\n```/g, (m, lang, code) => {
             const i = codeBlocks.length;
-            codeBlocks.push(`<pre class="code"><code${lang ? ` data-lang="${escapeHtmlAttr(lang)}"` : ''}>${escapeHtml(code)}</code></pre>`);
+            const langLower = (lang || '').toLowerCase();
+            // If this is a mermaid block, wrap it in a pre tag with class 'mermaid'.
+            if (langLower === 'mermaid') {
+              // Do not escape the code for mermaid; it will parse the raw definition.
+              codeBlocks.push(`<pre class="mermaid">${code}</pre>`);
+            } else {
+              codeBlocks.push(`<pre class="code"><code${lang ? ` data-lang="${escapeHtmlAttr(lang)}"` : ''}>${escapeHtml(code)}</code></pre>`);
+            }
             return `\uE000CODEBLOCK${i}\uE000`;
           });
 
