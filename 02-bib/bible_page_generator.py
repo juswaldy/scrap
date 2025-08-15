@@ -407,6 +407,7 @@ def generate_latex_page(
     verses: List[Verse],
     lexicon: HebrewStrongLexicon,
     start_footnote: int = 1,
+    hebrew_font: str = 'SBL BibLit',
 ) -> str:
     """Generate LaTeX code for a single Hebrew Bible page.
 
@@ -430,6 +431,13 @@ def generate_latex_page(
         Lexicon used to produce definitions for footnotes.
     start_footnote : int, optional
         Starting footnote number.  Defaults to 1.
+
+    hebrew_font : str, optional
+        Name of the OpenType font to use for Hebrew text.  A font
+        providing comprehensive coverage of Hebrew characters (for
+        example ``SBL BibLit`` or ``SBL Hebrew``) is recommended so
+        that cantillation marks and unusual diacritics such as the
+        meteg (U+05BD) are available.  Defaults to ``'SBL BibLit'``.
 
     Returns
     -------
@@ -457,7 +465,7 @@ def generate_latex_page(
     # font explicitly.  If you have polyglossia available you can add
     # \setdefaultlanguage{english} and \setotherlanguage{hebrew} yourself.
     # Use a common Hebrew font if available; adjust as necessary.
-    lines.append(r'\newfontfamily\hebrewfont[Script=Hebrew]{Ezra SIL}')
+    lines.append(rf'\newfontfamily\hebrewfont[Script=Hebrew]{{{hebrew_font}}}')
     lines.append('')
     lines.append(r'\begin{document}')
     # Header
@@ -487,7 +495,8 @@ def generate_latex_page(
             marker = ''
             if word.footnote_number is not None:
                 marker = rf'\textsuperscript{{{word.footnote_number}}}'
-            word_parts.append(rf'{escaped_text}{marker}')
+            # Wrap Hebrew text in \hebrewfont to ensure proper glyphs
+            word_parts.append(rf'{{\hebrewfont {escaped_text}}}{marker}')
         # Join the words with spaces
         lines.append(' '.join(word_parts) + r'\par')
     lines.append(r'\end{RTL}')
