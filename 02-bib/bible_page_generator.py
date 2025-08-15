@@ -447,9 +447,16 @@ def generate_latex_page(
     hebrew_font : str, optional
         Name of the OpenType font to use for Hebrew text.  A font
         providing comprehensive coverage of Hebrew characters (for
-        example ``SBL BibLit`` or ``SBL Hebrew``) is recommended so
+        example ``SBL Hebrew`` or ``SBL BibLit``) is recommended so
         that cantillation marks and unusual diacritics such as the
-        meteg (U+05BD) are available.  Defaults to ``'SBL BibLit'``.
+        meteg (U+05BD) are available.  Defaults to ``'SBL Hebrew'``.
+
+    Notes
+    -----
+    The generated page uses a trim size of 5.5×8.5 inches with 0.3 inch
+    margins on all sides via the `geometry` package.  If your layout
+    requirements differ you can adjust these values by editing the
+    preamble in ``generate_latex_page``.
 
     Returns
     -------
@@ -478,6 +485,11 @@ def generate_latex_page(
     # \setdefaultlanguage{english} and \setotherlanguage{hebrew} yourself.
     # Use a common Hebrew font if available; adjust as necessary.
     lines.append(rf'\newfontfamily\hebrewfont[Script=Hebrew]{{{hebrew_font}}}')
+
+    # Set page size and margins.  A compact trim size of 5.5×8.5 inches with
+    # 0.3 inch margins on all sides is used by default.  Adjust these
+    # values via the geometry package if needed.
+    lines.append(r'\usepackage[paperwidth=5.5in,paperheight=8.5in,margin=0.3in]{geometry}')
     lines.append('')
     lines.append(r'\begin{document}')
     # Header
@@ -502,8 +514,10 @@ def generate_latex_page(
         # Print words with footnote markers; separate by spaces
         word_parts: List[str] = []
         for word in verse.words:
-            # Escape special LaTeX characters in the word text
-            escaped_text = escape_latex(word.text)
+            # Remove slashes from the Hebrew word (prefix separators)
+            clean_text = word.text.replace('/', '')
+            # Escape special LaTeX characters in the cleaned text
+            escaped_text = escape_latex(clean_text)
             marker = ''
             if word.footnote_number is not None:
                 marker = rf'\textsuperscript{{{word.footnote_number}}}'
