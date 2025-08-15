@@ -311,6 +311,46 @@ class TokenGenerator:
                 local = uuid.uuid4().hex[:local_length]
             return f"{local}@anonymized.local"
 
+    def _generate_email_from_names(self, first_name: Optional[str], last_name: Optional[str], value: str) -> str:
+        """
+        Generate a fake email address using provided pseudonymised first and last names.
+
+        If both ``first_name`` and ``last_name`` are provided, the local part is
+        constructed as ``first.last`` followed by a numeric suffix.  If only
+        one is provided, the local part uses the available name alone with
+        a suffix.  If neither is provided, this falls back to
+        :meth:`_generate_fake_email` using the original value.  The domain is
+        selected from the email domain pool.  Deterministic mode ensures the
+        same original email always maps to the same pseudonym.
+        """
+        # If no names are provided, fall back to generic fake email.
+        if not first_name and not last_name:
+            return self._generate_fake_email(value)
+        # Determine a suffix for the local part
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
+            suffix = ''.join(str(int(c, 16) % 10) for c in digest[:3])
+            index = int(digest[3:7], 16) % len(EMAIL_DOMAIN_POOL)
+            domain = EMAIL_DOMAIN_POOL[index]
+        else:
+            try:
+                import secrets
+                randbelow = secrets.randbelow
+                domain = secrets.choice(EMAIL_DOMAIN_POOL)
+                suffix = f"{randbelow(1000):03d}"
+            except ImportError:
+                import random
+                domain = random.choice(EMAIL_DOMAIN_POOL)
+                suffix = f"{random.randrange(1000):03d}"
+        # Build local part from available names
+        if first_name and last_name:
+            local = f"{first_name.lower()}.{last_name.lower()}{suffix}"
+        elif first_name:
+            local = f"{first_name.lower()}{suffix}"
+        else:
+            local = f"{last_name.lower()}{suffix}"
+        return f"{local}@{domain}"
+
     def _generate_fake_name(self, value: str) -> str:
         """
         Generate a fake full name.  The number of name parts (e.g. first and last
@@ -477,13 +517,20 @@ class TokenGenerator:
         # Define keywords indicating first, middle and last names.  Middle,
         # preferred, nickname and alias names are treated as first names for
         # pseudonymisation purposes.  Maiden names are treated as last names.
-        # Include 'name' itself to treat generic name columns as first names.  Without
-        # this, values like single names in a 'Name' column would be hashed.
-        first_keywords = ['first', 'given', 'middle', 'preferred', 'nick', 'alias', 'name']
+        # Define keywords indicating first, middle and last names.  Middle,
+        # preferred, nickname and alias names are treated as first names for
+        # pseudonymisation purposes.  ``last_keywords`` identify surnames.
+        first_keywords = ['first', 'given', 'middle', 'preferred', 'nick', 'alias']
         last_keywords = ['last', 'surname', 'family', 'maiden']
-        # Remove common separators
+        # Split the column name on common separators
         tokens = re.split(r'[_\s]', lower)
         for token in tokens:
+            # Treat a token exactly equal to 'name' as a first name column.  This
+            # ensures columns named simply 'Name' are pseudonymised using
+            # first-name logic, while avoiding misclassifying 'lastname' or
+            # 'firstname' as generic names.
+            if token == 'name':
+                return 'first'
             for keyword in first_keywords:
                 if keyword in token:
                     return 'first'
@@ -779,6 +826,50 @@ class TokenGenerator:
         else:
             return f"{y:04d}{sep}{m:02d}{sep}{d:02d}"
 
+    def _generate_fake_birth_datetime(self, date_part: str, time_part: str) -> str:
+        """
+        Generate a fake datetime for birth dates, ensuring the date part is not
+        in the future.  Uses _generate_fake_birth_date for the date and
+        generates a time in the same format as the original.
+        """
+        fake_date = self._generate_fake_birth_date(date_part)
+        # Determine if time_part uses AM/PM
+        time_str = time_part.strip()
+        has_meridiem = time_str.endswith(('AM', 'PM')) or time_str.endswith(('am', 'pm'))
+        if self.deterministic:
+            digest = hmac.new(self.secret_key, (date_part + time_part).encode('utf-8'), hashlib.sha256).hexdigest()
+            digest_int = int(digest[:12], 16)
+            if has_meridiem:
+                hour = (digest_int % 12) + 1
+                minute = (digest_int // 12) % 60
+                second = (digest_int // (12 * 60)) % 60
+                ampm = 'AM' if ((digest_int // (12 * 60 * 60)) % 2) == 0 else 'PM'
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
+            else:
+                hour = digest_int % 24
+                minute = (digest_int // 24) % 60
+                second = (digest_int // (24 * 60)) % 60
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
+        else:
+            try:
+                import secrets
+                randbelow = secrets.randbelow
+            except ImportError:
+                import random
+                randbelow = lambda n: random.randrange(n)
+            if has_meridiem:
+                hour = randbelow(12) + 1
+                minute = randbelow(60)
+                second = randbelow(60)
+                ampm = 'AM' if randbelow(2) == 0 else 'PM'
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d} {ampm}"
+            else:
+                hour = randbelow(24)
+                minute = randbelow(60)
+                second = randbelow(60)
+                fake_time = f"{hour:02d}:{minute:02d}:{second:02d}"
+        return f"{fake_date} {fake_time}"
+
     def generate(self, value: str, column_name: Optional[str] = None) -> str:
         """
         Return a pseudonym token for the given input value.  If the value matches
@@ -883,7 +974,57 @@ class Pseudonymizer:
         for column in pii_columns:
             self._ensure_column_mapping(column)
             col_mapping = self.mapping[column]
-            # Generate tokens for new values
+            # Special handling for email columns when better_email is enabled.  If
+            # the token generator is configured for better emails and the column
+            # values resemble email addresses, construct the pseudonymised
+            # addresses using the pseudonymised first and last names from the
+            # same row.  This yields more believable emails (e.g. matching
+            # pseudonymised names) instead of random combinations.
+            if self.token_generator.better_email:
+                # Determine if this column contains email addresses by checking
+                # the first few non‑null values against the email pattern.
+                sample = df[column].dropna().astype(str).head(10)
+                email_matches = sum(bool(self.token_generator._EMAIL_PATTERN.match(x)) for x in sample)
+                # If at least half of the sampled values match, treat as email column.
+                if len(sample) > 0 and email_matches >= max(1, len(sample) // 2):
+                    for original_value in df[column].dropna().unique():
+                        original_str = str(original_value)
+                        if original_str not in col_mapping:
+                            # Find the first row containing this email
+                            idx = df.index[df[column].astype(str) == original_str][0]
+                            # Identify first and last name columns
+                            first_name_val: Optional[str] = None
+                            last_name_val: Optional[str] = None
+                            first_col: Optional[str] = None
+                            last_col: Optional[str] = None
+                            for col in df.columns:
+                                name_type = self.token_generator._get_name_type_from_column(col)
+                                if name_type == 'first' and first_name_val is None:
+                                    first_name_val = df.at[idx, col]
+                                    first_col = col
+                                elif name_type == 'last' and last_name_val is None:
+                                    last_name_val = df.at[idx, col]
+                                    last_col = col
+                            # Generate pseudonymised names using the token generator.  We pass
+                            # the column name to ensure deterministic mapping for first
+                            # and last names.  Missing or NaN values are ignored.
+                            pseudo_first: Optional[str] = None
+                            pseudo_last: Optional[str] = None
+                            if first_name_val is not None and str(first_name_val).lower() != 'nan':
+                                pseudo_first = self.token_generator.generate(str(first_name_val), column_name=first_col)
+                            if last_name_val is not None and str(last_name_val).lower() != 'nan':
+                                pseudo_last = self.token_generator.generate(str(last_name_val), column_name=last_col)
+                            # Construct the email using the pseudonymised names.  If names are
+                            # unavailable, the fallback in _generate_email_from_names will
+                            # produce a generic anonymised email.
+                            token = self.token_generator._generate_email_from_names(
+                                pseudo_first, pseudo_last, original_str
+                            )
+                            col_mapping[original_str] = token
+                    # Replace column values with tokens
+                    result[column] = df[column].astype(str).map(col_mapping)
+                    continue
+            # Default pseudonymisation: generate tokens for new values
             for original_value in df[column].dropna().unique():
                 original_str = str(original_value)
                 if original_str not in col_mapping:
