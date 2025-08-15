@@ -342,12 +342,15 @@ class HebrewStrongLexicon:
 
 
 def assign_footnotes(verses: List[Verse], lexicon: HebrewStrongLexicon, start: int = 1) -> None:
-    """Assign sequential footnote numbers and text to every word in a list of verses.
+    """Assign footnote numbers to words, reusing numbers for repeated lemmas.
 
-    Modifies each :class:`Word` in place by setting its ``footnote_number``
-    and ``footnote_text``.  The footnote text is looked up in the
-    supplied lexicon; if no definition is found the Strong’s number and
-    morphological code are used as a fallback.
+    This function scans the supplied verses in order and assigns
+    footnote numbers to each word.  When the same lemma appears more
+    than once on a page, all occurrences share the same footnote
+    number and footnote text.  Definitions are looked up via the
+    provided lexicon; if a definition is not found a fallback using
+    the Strong's number and morphology is used.  Footnote numbers are
+    assigned sequentially starting from ``start``.
 
     Parameters
     ----------
@@ -356,21 +359,30 @@ def assign_footnotes(verses: List[Verse], lexicon: HebrewStrongLexicon, start: i
     lexicon : :class:`HebrewStrongLexicon`
         Lexicon used to translate lemmas to English glosses.
     start : int, optional
-        Initial footnote number (default 1).  Footnote numbers will
-        increment from this value across all words in the verses.
+        Starting footnote number.  Defaults to 1.
     """
     footnote_counter = start
+    # Map from lemma key to (footnote_number, footnote_text)
+    lemma_map: Dict[str, Tuple[int, str]] = {}
     for verse in verses:
         for word in verse.words:
+            # Extract a key for reuse: use the lemma string itself
+            lemma_key = word.lemma
+            if lemma_key in lemma_map:
+                fn, ft = lemma_map[lemma_key]
+                word.footnote_number = fn
+                word.footnote_text = ft
+                continue
+            # New lemma: lookup definition
             definition = lexicon.lookup(word.lemma)
-            # Fallback to lemma and morph if no definition
             if not definition:
-                # Extract numeric part of lemma for fallback display
+                # Fallback: use Strong's number and morphology
                 m = re.search(r'(\d+)', word.lemma)
                 strong_number = m.group(1) if m else word.lemma
                 definition = f'Strong {strong_number}; morph {word.morph}'
             word.footnote_number = footnote_counter
             word.footnote_text = definition
+            lemma_map[lemma_key] = (footnote_counter, definition)
             footnote_counter += 1
 
 
@@ -407,7 +419,7 @@ def generate_latex_page(
     verses: List[Verse],
     lexicon: HebrewStrongLexicon,
     start_footnote: int = 1,
-    hebrew_font: str = 'SBL BibLit',
+    hebrew_font: str = 'SBL Hebrew',
 ) -> str:
     """Generate LaTeX code for a single Hebrew Bible page.
 
@@ -501,16 +513,18 @@ def generate_latex_page(
         lines.append(' '.join(word_parts) + r'\par')
     lines.append(r'\end{RTL}')
     lines.append('')
-    # Footnote apparatus
+    # Footnote apparatus: print each unique footnote once, in order of footnote number
     lines.append(r'\vspace{1em}')
     lines.append(r'\begin{footnotesize}')
+    # Build a dict of footnote numbers to texts
+    footnotes: Dict[int, str] = {}
     for verse in verses:
         for word in verse.words:
-            fn = word.footnote_number
-            ft = word.footnote_text or ''
-            # Escape special characters in footnote text
-            ft_esc = escape_latex(ft)
-            lines.append(rf'\textsuperscript{{{fn}}} {ft_esc}\\')
+            if word.footnote_number is not None and word.footnote_text is not None:
+                footnotes[word.footnote_number] = word.footnote_text
+    for fn in sorted(footnotes.keys()):
+        ft_esc = escape_latex(footnotes[fn])
+        lines.append(rf'\textsuperscript{{{fn}}} {ft_esc}\\')
     lines.append(r'\end{footnotesize}')
     lines.append(r'\end{document}')
     return '\n'.join(lines)
