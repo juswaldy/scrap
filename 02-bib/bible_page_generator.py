@@ -446,12 +446,17 @@ def generate_latex_page(
     # Build the LaTeX document
     lines: List[str] = []
     lines.append(r'\documentclass[12pt]{article}')
+    # fontspec allows selection of TrueType/OpenType fonts with XeLaTeX or LuaLaTeX
     lines.append(r'\usepackage{fontspec}')
+    # expl3 is required by bidi/polyglossia on some TeX installations
+    lines.append(r'\usepackage{expl3}')
+    # bidi enables right‑to‑left typesetting; it depends on expl3
     lines.append(r'\usepackage{bidi}')
-    lines.append(r'\usepackage{polyglossia}')
-    lines.append(r'\setdefaultlanguage{english}')
-    lines.append(r'\setotherlanguage{hebrew}')
-    # Use a common Hebrew font if available; adjust as necessary
+    # We do not use polyglossia here because older TeX distributions may
+    # not support its internal LaTeX3 macros.  Instead we define a Hebrew
+    # font explicitly.  If you have polyglossia available you can add
+    # \setdefaultlanguage{english} and \setotherlanguage{hebrew} yourself.
+    # Use a common Hebrew font if available; adjust as necessary.
     lines.append(r'\newfontfamily\hebrewfont[Script=Hebrew]{Ezra SIL}')
     lines.append('')
     lines.append(r'\begin{document}')
