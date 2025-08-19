@@ -306,6 +306,7 @@ def _compress_file(src_path: str, dst_path: str, level: int = 3) -> None:
     # Write encoded text as ASCII.  Use newline for readability.
     with open(dst_path, 'w', encoding='ascii', newline='') as f_out:
         f_out.write(encoded_text)
+        print(f"{src_path} --> {dst_path}")
 
 
 def _decompress_file(src_path: str, dst_path: str) -> None:
@@ -325,6 +326,7 @@ def _decompress_file(src_path: str, dst_path: str) -> None:
     # Write bytes back exactly as they were read.
     with open(dst_path, 'wb') as f_out:
         f_out.write(original)
+        print(f"{src_path} --> {dst_path}")
 
 
 def compress_folder(src: str, dst: str, level: int = 3) -> None:
