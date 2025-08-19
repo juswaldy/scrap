@@ -202,6 +202,9 @@ class TokenGenerator:
     caller must still store a mapping to reverse tokens back to original values.
     """
 
+    # Default length for generated IDs
+    _DEFAULT_ID_LENGTH = 18
+
     # Regular expressions for detecting data types
     _EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
     _PHONE_PATTERN = re.compile(r"^(\+?\d{1,3}[\s\-]?)?(\(\d{1,4}\)[\s\-]?)?\d{3,4}[\s\-]?\d{3,4}$")
@@ -502,9 +505,9 @@ class TokenGenerator:
         if self.deterministic:
             # Use HMAC digest and take first 8 characters
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            return digest[:8]
+            return digest[:self._DEFAULT_ID_LENGTH]
         else:
-            return uuid.uuid4().hex[:8]
+            return uuid.uuid4().hex[:self._DEFAULT_ID_LENGTH]
 
     def _get_name_type_from_column(self, column_name: Optional[str]) -> Optional[str]:
         """
@@ -695,7 +698,7 @@ class TokenGenerator:
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
             # Use first 8 hex digits for the number
-            num_int = int(digest[:8], 16)
+            num_int = int(digest, 16)
             number = (num_int % max_number) + 1
             # Choose street name and suffix deterministically
             street_index = int(digest[8:12], 16) % len(STREET_NAME_POOL)
@@ -719,7 +722,7 @@ class TokenGenerator:
         """Select a fake city from the pool."""
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            index = int(digest[:8], 16) % len(CITY_NAME_POOL)
+            index = int(digest, 16) % len(CITY_NAME_POOL)
             return CITY_NAME_POOL[index]
         else:
             try:
@@ -733,7 +736,7 @@ class TokenGenerator:
         """Select a fake state or province from the pool."""
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            index = int(digest[:8], 16) % len(STATE_NAME_POOL)
+            index = int(digest, 16) % len(STATE_NAME_POOL)
             return STATE_NAME_POOL[index]
         else:
             try:
@@ -759,7 +762,7 @@ class TokenGenerator:
         """Select a fake country from the pool."""
         if self.deterministic:
             digest = hmac.new(self.secret_key, value.encode('utf-8'), hashlib.sha256).hexdigest()
-            index = int(digest[:8], 16) % len(COUNTRY_NAME_POOL)
+            index = int(digest, 16) % len(COUNTRY_NAME_POOL)
             return COUNTRY_NAME_POOL[index]
         else:
             try:
