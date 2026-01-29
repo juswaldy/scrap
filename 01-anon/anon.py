@@ -496,7 +496,7 @@ class TokenGenerator:
         if name.endswith('Id'):
             return True
         # Columns ending exactly with 'ID' (both uppercase)
-        if name.endswith('ID'):
+        if name.endswith('ID') or name.startswith('ID'):
             return True
         return False
 
@@ -1089,7 +1089,7 @@ def read_file(path: str) -> pd.DataFrame:
     """
     ext = os.path.splitext(path)[1].lower()
     if ext == '.csv':
-        return pd.read_csv(path)
+        return pd.read_csv(path, low_memory=False, encoding='utf-8')
     elif ext == '.json':
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)

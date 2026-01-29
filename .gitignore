@@ -1,0 +1,38 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments & environment files
+.venv/
+venv/
+.env
+.env.local
+.env.*
+
+# Tool caches
+.cache/
+.poetry/
+
+# Project outputs
+outputs/
+outputs/cache/
+*.log
+
+# Editors & OS junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
