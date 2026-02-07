@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 06 12:41:47 PDT 2025" guiVersion="7.1.0.8" id="1760111500730" licenseCode="CLCDSTWUXX28767030SP" name="00-ingest" nature="jobflow" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/dataobjects.fmt" id="Metadata2"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node guiName="api" guiX="620" guiY="100" id="API" type="TRASH"/>
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="100" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT *
+FROM [_meta].[dbo].[_object]
+WHERE _type NOT LIKE 'db%'
+AND _status = 'active'
+AND DATEADD(MINUTE, 50, CURRENT_TIMESTAMP) > DATEADD(HOUR, _frequency, COALESCE(_refreshed, '1900-01-01'))]]></attr>
+<attr name="guiDescription"><![CDATA[Get non-db objects that are due for ingestion]]></attr>
+</Node>
+<Node guiName="db" guiX="620" guiY="225" id="DB" type="TRASH"/>
+<Node guiName="db-large" guiX="620" guiY="350" id="DB_LARGE" type="TRASH"/>
+<Node guiName="ExecuteGraph" guiX="620" guiY="725" id="EXECUTE_GRAPH" jobURL="${GRAPH_DIR}/copy-ldap-source-to-bronze.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.catalog = $in.0.catalog;
+	$out.1.schema = $in.0.schema;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[ldap]]></attr>
+</Node>
+<Node guiName="ExecuteGraph" guiX="620" guiY="475" id="EXECUTE_GRAPH1" jobURL="${GRAPH_DIR}/copy-entra-source-to-bronze.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.catalog = $in.0.catalog;
+	$out.1.schema = $in.0.schema;
+	$out.1.object = $in.0.object;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[entra]]></attr>
+</Node>
+<Node guiName="file" guiX="620" guiY="600" id="FILE" type="TRASH"/>
+<Node guiName="Partition" guiX="320" guiY="225" id="PARTITION" type="PARTITION">
+<attr name="partitionSource"><![CDATA[//#CTL2
+// This transformation partitions input records into multiple output ports.
+
+// Returns the number of the output port where the input record will be sent.
+function integer getOutputPort() {
+	integer result = 0;
+	switch ($in.0.type) {
+		case "api": result = 0; break;
+		case "db": result = 1; break;
+		case "db-large": result = 2; break;
+		case "entra": result = 3; break;
+		case "file": result = 4; break;
+		case "ldap": result = 5; break;
+		case "salesforce": result = 6; break;
+	}
+  return result;
+}
+
+// Called during component initialization, partitionCount is the number of output ports.
+// function void init(integer partitionCount) {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources.
+// All resources allocated within this method should be released by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if getOutputPort() throws an exception.
+// function integer getOutputPortOnError(string errorMessage, string stackTrace) {
+// }
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="salesforce" guiX="620" guiY="850" id="SALESFORCE" type="TRASH"/>
+<Node guiName="SimpleGather" guiX="895" guiY="225" id="SIMPLE_GATHER" type="SIMPLE_GATHER"/>
+<Node guiName="Success" guiX="1170" guiY="100" id="SUCCESS" type="SUCCESS"/>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="PARTITION:0"/>
+<Edge fromNode="EXECUTE_GRAPH:0" guiBendpoints="" guiRouter="Manhattan" id="Edge12" inPort="Port 2 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:2"/>
+<Edge fromNode="EXECUTE_GRAPH:1" guiBendpoints="" guiRouter="Manhattan" id="Edge13" inPort="Port 3 (in)" outPort="Port 1 (error)" toNode="SIMPLE_GATHER:3"/>
+<Edge fromNode="EXECUTE_GRAPH1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:0"/>
+<Edge fromNode="EXECUTE_GRAPH1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 1 (in)" outPort="Port 1 (error)" toNode="SIMPLE_GATHER:1"/>
+<Edge fromNode="PARTITION:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="API:0"/>
+<Edge fromNode="PARTITION:1" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="DB:0"/>
+<Edge fromNode="PARTITION:2" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" outPort="Port 2 (out)" toNode="DB_LARGE:0"/>
+<Edge fromNode="PARTITION:3" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" outPort="Port 3 (out)" toNode="EXECUTE_GRAPH1:0"/>
+<Edge fromNode="PARTITION:4" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" outPort="Port 4 (out)" toNode="FILE:0"/>
+<Edge fromNode="PARTITION:5" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" outPort="Port 5 (out)" toNode="EXECUTE_GRAPH:0"/>
+<Edge fromNode="PARTITION:6" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" outPort="Port 6 (out)" toNode="SALESFORCE:0"/>
+<Edge fromNode="SIMPLE_GATHER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge14" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SUCCESS:0"/>
+</Phase>
+</Graph>

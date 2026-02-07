@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Fri Oct 03 14:07:26 PDT 2025" guiVersion="7.1.0.8" id="1759526289477" licenseCode="CLCDSTWUXX28767030SP" name="00-readytt" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/TheMetadata.fmt" id="Metadata0"/>
+<Connection dbConfig="sandbox://Common/conn/${host}.cfg" id="JDBC0" type="JDBC"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC1" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="TWU_VENA_COURSE_GL_MAPPING"/>
+<GraphParameter name="filter" value="WHERE HIERARCHY_VERSION_ID &gt;=901"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC1" guiName="DatabaseReader" guiX="95" guiY="75" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT '${object}' objname, OBJECT_ID('[${catalog}].[${schema}].[${object}]') objid]]></attr>
+<attr name="guiDescription"><![CDATA[Check bronze table]]></attr>
+</Node>
+<Node guiName="ExecuteGraph" guiX="445" guiY="75" id="EXECUTE_GRAPH" jobURL="${GRAPH_DIR}/create-datahub-table.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	string area = 'Bronze';
+	$out.0.executionLabel = area + ' ' + getParamValue("object");
+	$out.1.host = getParamValue("host");
+	$out.1.catalog = getParamValue("catalog");
+	$out.1.schema = getParamValue("schema");
+	$out.1.object = getParamValue("object");
+	$out.1.area = area;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Create bronze table]]></attr>
+</Node>
+<Node guiName="Filter" guiX="270" guiY="75" id="FILTER" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+isnull($in.0.TheInteger)]]></attr>
+<attr name="guiDescription"><![CDATA[Bronze table is missing?]]></attr>
+</Node>
+<Node guiName="Map" guiX="695" guiY="50" id="MAP1" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.TheString = $in.0.status;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge14" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="FILTER:0"/>
+<Edge fromNode="EXECUTE_GRAPH:0" guiBendpoints="" guiRouter="Manhattan" id="Edge15" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="MAP1:0"/>
+<Edge fromNode="EXECUTE_GRAPH:1" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 0 (in)" outPort="Port 1 (error)" toNode="SIMPLE_GATHER2:0"/>
+<Edge fromNode="FILTER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge12" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="EXECUTE_GRAPH:0"/>
+<Edge fromNode="FILTER:1" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" outPort="Port 1 (rejected)" toNode="SIMPLE_GATHER1:0"/>
+<Edge fromNode="MAP1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge16" inPort="Port 1 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER1:1"/>
+</Phase>
+<Phase number="5">
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="270" guiY="350" id="DELETE_BY_FILTER" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[DELETE FROM [${catalog}].[${schema}].[${object}]
+${filter}]]></attr>
+<attr name="guiDescription"><![CDATA[Delete bronze rows by filter]]></attr>
+</Node>
+<Node guiName="SimpleGather" guiX="95" guiY="350" id="SIMPLE_GATHER1" type="SIMPLE_GATHER"/>
+<Edge fromNode="DELETE_BY_FILTER:1" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" outPort="Port 1 (error output)" toNode="SIMPLE_GATHER:0"/>
+<Edge fromNode="SIMPLE_GATHER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 0 (input parameters)" outPort="Port 0 (out)" toNode="DELETE_BY_FILTER:0"/>
+</Phase>
+<Phase number="10">
+<Node guiName="ExecuteGraph" guiX="495" guiY="475" id="EXECUTE_GRAPH1" jobURL="${GRAPH_DIR}/copy-staging-to-bronze.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.host = getParamValue("host");
+	$out.1.catalog = getParamValue("catalog");
+	$out.1.schema = getParamValue("schema");
+	$out.1.object = getParamValue("object");
+	$out.1.filter = getParamValue("filter");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Copy from staging to bronze]]></attr>
+</Node>
+<Node guiName="Map" guiX="920" guiY="200" id="MAP" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.errText = $in.0.errMessage;
+	$out.0.errCode = str2integer($in.0.errException);
+	$out.0.statement = $in.0.status;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="SimpleGather" guiX="720" guiY="200" id="SIMPLE_GATHER2" type="SIMPLE_GATHER"/>
+<Edge fromNode="EXECUTE_GRAPH1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 1 (in)" outPort="Port 1 (error)" toNode="SIMPLE_GATHER2:1"/>
+<Edge fromNode="MAP:0" guiBendpoints="" guiRouter="Manhattan" id="Edge13" inPort="Port 3 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:3"/>
+<Edge fromNode="SIMPLE_GATHER2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="MAP:0"/>
+</Phase>
+<Phase number="15">
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="795" guiY="550" id="DELETE_BY_FILTER2" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[UPDATE STATISTICS [${catalog}].[${schema}].[${object}]
+]]></attr>
+<attr name="guiDescription"><![CDATA[Update bronze table stats]]></attr>
+</Node>
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="970" guiY="550" id="DELETE_BY_FILTER3" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[DROP TABLE IF EXISTS [${catalog}].[Staging].[${schema}.${object}]]]></attr>
+<attr name="guiDescription"><![CDATA[Remove staging table]]></attr>
+</Node>
+<Node guiName="Fail" guiX="1195" guiY="725" id="FAIL" type="FAIL"/>
+<Node guiName="SimpleGather" guiX="995" guiY="725" id="SIMPLE_GATHER" type="SIMPLE_GATHER"/>
+<Node guiName="Success" guiX="1195" guiY="550" id="SUCCESS" type="SUCCESS"/>
+<Edge fromNode="DELETE_BY_FILTER2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (input parameters)" outPort="Port 0 (procedure output)" toNode="DELETE_BY_FILTER3:0"/>
+<Edge fromNode="DELETE_BY_FILTER2:1" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 1 (in)" outPort="Port 1 (error output)" toNode="SIMPLE_GATHER:1"/>
+<Edge fromNode="DELETE_BY_FILTER3:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" outPort="Port 0 (procedure output)" toNode="SUCCESS:0"/>
+<Edge fromNode="DELETE_BY_FILTER3:1" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 2 (in)" outPort="Port 1 (error output)" toNode="SIMPLE_GATHER:2"/>
+<Edge fromNode="SIMPLE_GATHER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="FAIL:0"/>
+</Phase>
+</Graph>

@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 06 12:41:47 PDT 2025" guiVersion="7.1.0.8" id="1760111500730" licenseCode="CLCDSTWUXX28767030SP" name="00-ingest" nature="jobflow" showComponentDetails="true">
+<Global>
+<Metadata id="Metadata2">
+<Record fieldDelimiter="|" name="inputparams" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field name="type" type="string"/>
+<Field name="host" type="string"/>
+<Field name="catalog" type="string"/>
+<Field name="schema" type="string"/>
+<Field name="object" type="string"/>
+<Field name="filter" type="string"/>
+</Record>
+</Metadata>
+<GraphParameters>
+<GraphParameter name="type" value="db"/>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="ADDRESS_MASTER"/>
+<GraphParameter name="filter"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node guiName="api" guiX="595" guiY="100" id="API" type="TRASH"/>
+<Node guiName="ExecuteGraph" guiX="595" guiY="725" id="EXECUTE_GRAPH" jobURL="${GRAPH_DIR}/copy-ldap-source-to-bronze.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.catalog = $in.0.catalog;
+	$out.1.schema = $in.0.schema;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[ldap]]></attr>
+</Node>
+<Node guiName="ExecuteGraph" guiX="595" guiY="475" id="EXECUTE_GRAPH1" jobURL="${GRAPH_DIR}/copy-entra-source-to-bronze.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.catalog = $in.0.catalog;
+	$out.1.schema = $in.0.schema;
+	$out.1.object = $in.0.object;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[entra]]></attr>
+</Node>
+<Node guiName="ExecuteJobflow" guiX="595" guiY="225" id="EXECUTE_JOBFLOW" jobURL="${JOBFLOW_DIR}/ingest-db-single.jbf" type="EXECUTE_JOBFLOW">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.type = "db";
+	$out.1.host = getRequestParameter("host");
+	$out.1.catalog = getRequestParameter("catalog");
+	$out.1.schema = getRequestParameter("schema");
+	$out.1.object = getRequestParameter("object");
+	$out.1.filter = getRequestParameter("filter");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[db]]></attr>
+</Node>
+<Node guiName="ExecuteJobflow" guiX="595" guiY="350" id="EXECUTE_JOBFLOW1" jobURL="${JOBFLOW_DIR}/ingest-db-single-large.jbf" type="EXECUTE_JOBFLOW">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.type = "db-large";
+	$out.1.host = getRequestParameter("host");
+	$out.1.catalog = getRequestParameter("catalog");
+	$out.1.schema = getRequestParameter("schema");
+	$out.1.object = getRequestParameter("object");
+	$out.1.filter = getRequestParameter("filter");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[db-large]]></attr>
+</Node>
+<Node guiName="file" guiX="595" guiY="600" id="FILE" type="TRASH"/>
+<Node guiName="GetJobInput" guiX="95" guiY="100" id="GET_JOB_INPUT" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.type = getParamValue("type");
+	$out.0.host = getParamValue("host");
+	$out.0.catalog = getParamValue("catalog");
+	$out.0.schema = getParamValue("schema");
+	$out.0.object = getParamValue("object");
+	$out.0.filter = getParamValue("filter");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Partition" guiX="295" guiY="375" id="PARTITION" type="PARTITION">
+<attr name="partitionSource"><![CDATA[//#CTL2
+// This transformation partitions input records into multiple output ports.
+
+// Returns the number of the output port where the input record will be sent.
+function integer getOutputPort() {
+	string type = getRequestParameter("type");
+	integer result = 0;
+	switch (type) {
+		case "api": result = 0; break;
+		case "db": result = 1; break;
+		case "db-large": result = 2; break;
+		case "entra": result = 3; break;
+		case "file": result = 4; break;
+		case "ldap": result = 5; break;
+		case "salesforce": result = 6; break;
+	}
+	return result;
+}
+
+// Called during component initialization, partitionCount is the number of output ports.
+// function void init(integer partitionCount) {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources.
+// All resources allocated within this method should be released by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if getOutputPort() throws an exception.
+// function integer getOutputPortOnError(string errorMessage, string stackTrace) {
+// }
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="salesforce" guiX="595" guiY="850" id="SALESFORCE" type="TRASH"/>
+<Node guiName="SimpleGather" guiX="970" guiY="100" id="SIMPLE_GATHER" type="SIMPLE_GATHER"/>
+<Node guiName="Success" guiX="1195" guiY="100" id="SUCCESS" type="SUCCESS"/>
+<Edge fromNode="EXECUTE_GRAPH:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 2 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:2"/>
+<Edge fromNode="EXECUTE_GRAPH:1" guiBendpoints="" guiRouter="Manhattan" id="Edge14" inPort="Port 3 (in)" outPort="Port 1 (error)" toNode="SIMPLE_GATHER:3"/>
+<Edge fromNode="EXECUTE_GRAPH1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 4 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:4"/>
+<Edge fromNode="EXECUTE_GRAPH1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 5 (in)" outPort="Port 1 (error)" toNode="SIMPLE_GATHER:5"/>
+<Edge fromNode="EXECUTE_JOBFLOW:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:0"/>
+<Edge fromNode="EXECUTE_JOBFLOW:1" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 1 (in)" outPort="Port 1 (error)" toNode="SIMPLE_GATHER:1"/>
+<Edge fromNode="EXECUTE_JOBFLOW1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 6 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:6"/>
+<Edge fromNode="EXECUTE_JOBFLOW1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge16" inPort="Port 7 (in)" outPort="Port 1 (error)" toNode="SIMPLE_GATHER:7"/>
+<Edge fromNode="GET_JOB_INPUT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge15" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="PARTITION:0"/>
+<Edge fromNode="PARTITION:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="API:0"/>
+<Edge fromNode="PARTITION:1" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="EXECUTE_JOBFLOW:0"/>
+<Edge fromNode="PARTITION:2" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" outPort="Port 2 (out)" toNode="EXECUTE_JOBFLOW1:0"/>
+<Edge fromNode="PARTITION:3" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" outPort="Port 3 (out)" toNode="EXECUTE_GRAPH1:0"/>
+<Edge fromNode="PARTITION:4" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" outPort="Port 4 (out)" toNode="FILE:0"/>
+<Edge fromNode="PARTITION:5" guiBendpoints="" guiRouter="Manhattan" id="Edge13" inPort="Port 0 (in)" outPort="Port 5 (out)" toNode="EXECUTE_GRAPH:0"/>
+<Edge fromNode="PARTITION:6" guiBendpoints="" guiRouter="Manhattan" id="Edge12" inPort="Port 0 (in)" outPort="Port 6 (out)" toNode="SALESFORCE:0"/>
+<Edge fromNode="SIMPLE_GATHER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SUCCESS:0"/>
+</Phase>
+</Graph>

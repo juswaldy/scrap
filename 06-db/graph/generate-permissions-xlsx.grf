@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Tue Nov 25 11:20:01 PST 2025" guiVersion="7.1.0.8" id="1764892508597" licenseCode="CLCDSTWUXX28767030SP" name="00-load-sec-schema" showComponentDetails="true">
+<Global>
+<Metadata id="Metadata8">
+<Record fieldDelimiter=";" name="Endpoints" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="EndpointName" size="128" type="string"/>
+<Field name="EndpointType" type="string"/>
+<Field name="State" size="5" type="string"/>
+<Field name="Port" type="integer"/>
+<Field name="Role" size="32" type="string"/>
+<Field name="Encryption" size="128" type="string"/>
+<Field name="Algorithm" size="128" type="string"/>
+<Field name="Authentication" size="128" type="string"/>
+<Field name="OwnerLogin" type="string"/>
+<Field name="ForceRecreate" size="1" type="boolean"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata0">
+<Record fieldDelimiter=";" name="Logins" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="LoginName" size="128" type="string"/>
+<Field name="LoginType" size="16" type="string"/>
+<Field name="PasswordMode" size="16" type="string"/>
+<Field name="PasswordPlain" size="512" type="string"/>
+<Field name="PasswordHash" size="512" type="string"/>
+<Field name="CheckPolicy" size="1" type="boolean"/>
+<Field name="CheckExpiration" size="1" type="boolean"/>
+<Field name="MustChange" size="1" type="boolean"/>
+<Field name="DefaultDatabase" size="128" type="string"/>
+<Field name="DefaultLanguage" size="128" type="string"/>
+<Field name="Disabled" size="1" type="boolean"/>
+<Field name="SID" size="85" type="byte"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata6">
+<Record fieldDelimiter=";" name="Memberships" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="DbName" size="128" type="string"/>
+<Field name="UserName" size="128" type="string"/>
+<Field name="RoleName" size="16" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata3">
+<Record fieldDelimiter=";" name="Permissions" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="DbName" size="128" type="string"/>
+<Field name="RoleName" size="128" type="string"/>
+<Field name="State" size="5" type="string"/>
+<Field name="Scope" size="16" type="string"/>
+<Field name="SchemaName" size="128" type="string"/>
+<Field name="ObjectName" size="128" type="string"/>
+<Field name="PermissionName" size="128" type="string"/>
+<Field name="WithGrantOption" size="1" type="boolean"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata5">
+<Record fieldDelimiter=";" name="Roles" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="DbName" size="128" type="string"/>
+<Field name="RoleName" size="128" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter=";" name="ServerPermissions" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="LoginName" size="128" type="string"/>
+<Field name="State" size="5" type="string"/>
+<Field name="Scope" size="32" type="string"/>
+<Field name="EndpointName" size="128" type="string"/>
+<Field name="AGName" size="128" type="string"/>
+<Field name="PermissionName" size="128" type="string"/>
+<Field name="WithGrantOption" size="1" type="boolean"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata7">
+<Record fieldDelimiter=";" name="ServerRoleMemberships" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="LoginName" size="128" type="string"/>
+<Field name="ServerRoleName" size="128" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata2">
+<Record fieldDelimiter=";" name="Users" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="DbName" size="128" type="string"/>
+<Field name="UserName" size="128" type="string"/>
+<Field name="AuthType" size="16" type="string"/>
+<Field name="LoginName" size="128" type="string"/>
+<Field name="DefaultSchema" size="128" type="string"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="hostname" value="Datahub"/>
+<GraphParameter name="dbname" value="OTR"/>
+<GraphParameter name="outfile">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	string hostname = getParamValue("hostname");
+	string dbname = getParamValue("dbname");
+	return concat(
+		"permissions-",
+		hostname,
+		dbname == "all" ? "" : "-" + dbname,
+		".xlsx"
+	);
+}
+]]></attr>
+</GraphParameter>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node guiName="CopyFiles" guiX="95" guiY="100" id="COPY_FILES" sourceURL="${META_DIR}/permissions-template.xlsx" targetURL="${DATAOUT_DIR}/${outfile}" type="COPY_FILES"/>
+</Phase>
+<Phase number="10">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="300" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT * FROM _meta.sec.vwUsers
+WHERE DbName LIKE
+CASE
+WHEN '${dbname}' = 'all' THEN '%'
+ELSE '${dbname}'
+END
+ORDER BY HostName, DbName, UserName]]></attr>
+<attr name="guiDescription"><![CDATA[Users]]></attr>
+</Node>
+<Node existingSheetsActions="CLEAR_SHEETS" fileURL="${DATAOUT_DIR}/${outfile}" guiName="SpreadsheetDataWriter" guiX="320" guiY="300" id="SPREADSHEET_DATA_WRITER" sheet="Users" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY">
+<attr name="guiDescription"><![CDATA[Users]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge17" inPort="Port 0 (input)" metadata="Metadata2" outPort="Port 0 (out)" toNode="SPREADSHEET_DATA_WRITER:0"/>
+</Phase>
+<Phase number="20">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="425" id="DATABASE_READER1" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT * FROM _meta.sec.vwRoles
+WHERE DbName LIKE
+CASE
+WHEN '${dbname}' = 'all' THEN '%'
+ELSE '${dbname}'
+END
+ORDER BY HostName, DbName, RoleName]]></attr>
+<attr name="guiDescription"><![CDATA[Roles]]></attr>
+</Node>
+<Node existingSheetsActions="CLEAR_SHEETS" fileURL="${DATAOUT_DIR}/${outfile}" guiName="SpreadsheetDataWriter" guiX="320" guiY="425" id="SPREADSHEET_DATA_WRITER1" sheet="Roles" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY">
+<attr name="guiDescription"><![CDATA[Roles]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge25" inPort="Port 0 (input)" metadata="Metadata5" outPort="Port 0 (out)" toNode="SPREADSHEET_DATA_WRITER1:0"/>
+</Phase>
+<Phase number="30">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="550" id="DATABASE_READER2" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT * FROM _meta.sec.vwMemberships
+WHERE DbName LIKE
+CASE
+WHEN '${dbname}' = 'all' THEN '%'
+ELSE '${dbname}'
+END
+ORDER BY HostName, DbName, UserName, RoleName]]></attr>
+<attr name="guiDescription"><![CDATA[Memberships]]></attr>
+</Node>
+<Node existingSheetsActions="CLEAR_SHEETS" fileURL="${DATAOUT_DIR}/${outfile}" guiName="SpreadsheetDataWriter" guiX="320" guiY="550" id="SPREADSHEET_DATA_WRITER2" sheet="Memberships" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY">
+<attr name="guiDescription"><![CDATA[Memberships]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge26" inPort="Port 0 (input)" metadata="Metadata6" outPort="Port 0 (out)" toNode="SPREADSHEET_DATA_WRITER2:0"/>
+</Phase>
+<Phase number="40">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="675" id="DATABASE_READER3" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT * FROM _meta.sec.vwPermissions
+WHERE DbName LIKE
+CASE
+WHEN '${dbname}' = 'all' THEN '%'
+ELSE '${dbname}'
+END
+ORDER BY HostName, DbName, RoleName, SchemaName, ObjectName, PermissionName]]></attr>
+<attr name="guiDescription"><![CDATA[Permissions]]></attr>
+</Node>
+<Node existingSheetsActions="CLEAR_SHEETS" fileURL="${DATAOUT_DIR}/${outfile}" guiName="SpreadsheetDataWriter" guiX="320" guiY="675" id="SPREADSHEET_DATA_WRITER3" sheet="Permissions" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY">
+<attr name="guiDescription"><![CDATA[Permissions]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER3:0" guiBendpoints="" guiRouter="Manhattan" id="Edge27" inPort="Port 0 (input)" metadata="Metadata3" outPort="Port 0 (out)" toNode="SPREADSHEET_DATA_WRITER3:0"/>
+</Phase>
+<Phase number="50">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="800" id="DATABASE_READER4" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[WITH dbUsers AS (
+	SELECT LoginName
+	FROM _meta.sec.vwUsers
+	WHERE DbName LIKE
+		CASE
+		WHEN '${dbname}' IN ( 'all', 'logins' ) THEN '%'
+		ELSE '${dbname}'
+		END
+	AND UserName NOT LIKE
+		CASE
+		WHEN '${dbname}' IN ( 'all', 'logins' ) THEN ''
+		ELSE 'cloveretl' -- For db specific requests, do not include cloveretl. The request might come from non-IT users
+		END
+)
+SELECT DISTINCT l.* FROM dbUsers u
+JOIN _meta.sec.vwLogins l ON u.LoginName = l.LoginName
+ORDER BY HostName, LoginType, LoginName]]></attr>
+<attr name="guiDescription"><![CDATA[Logins]]></attr>
+</Node>
+<Node existingSheetsActions="CLEAR_SHEETS" fileURL="${DATAOUT_DIR}/${outfile}" guiName="SpreadsheetDataWriter" guiX="320" guiY="800" id="SPREADSHEET_DATA_WRITER4" sheet="Logins" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY">
+<attr name="guiDescription"><![CDATA[Logins]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER4:0" guiBendpoints="" guiRouter="Manhattan" id="Edge28" inPort="Port 0 (input)" metadata="Metadata0" outPort="Port 0 (out)" toNode="SPREADSHEET_DATA_WRITER4:0"/>
+</Phase>
+<Phase number="60">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="925" id="DATABASE_READER5" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[WITH dbUsers AS ( SELECT LoginName FROM _meta.sec.vwUsers WHERE DbName LIKE CASE WHEN '${dbname}' = 'all' THEN '%' ELSE '${dbname}' END )
+SELECT p.* FROM dbUsers u
+JOIN _meta.sec.vwServerPermissions p ON u.LoginName = p.LoginName
+ORDER BY HostName, LoginName, EndpointName, AGName, PermissionName]]></attr>
+<attr name="guiDescription"><![CDATA[ServerPermissions]]></attr>
+</Node>
+<Node existingSheetsActions="CLEAR_SHEETS" fileURL="${DATAOUT_DIR}/${outfile}" guiName="SpreadsheetDataWriter" guiX="320" guiY="925" id="SPREADSHEET_DATA_WRITER5" sheet="ServerPermissions" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY">
+<attr name="guiDescription"><![CDATA[ServerPermissions]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER5:0" guiBendpoints="" guiRouter="Manhattan" id="Edge29" inPort="Port 0 (input)" metadata="Metadata1" outPort="Port 0 (out)" toNode="SPREADSHEET_DATA_WRITER5:0"/>
+</Phase>
+<Phase number="70">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="1050" id="DATABASE_READER6" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[WITH dbUsers AS ( SELECT LoginName FROM _meta.sec.vwUsers WHERE DbName LIKE CASE WHEN '${dbname}' = 'all' THEN '%' ELSE '${dbname}' END )
+SELECT m.* FROM dbUsers u
+JOIN _meta.sec.vwServerRoleMemberships m ON u.LoginName = m.LoginName
+ORDER BY HostName, LoginName, ServerRoleName]]></attr>
+<attr name="guiDescription"><![CDATA[ServerRoleMemberships]]></attr>
+</Node>
+<Node existingSheetsActions="CLEAR_SHEETS" fileURL="${DATAOUT_DIR}/${outfile}" guiName="SpreadsheetDataWriter" guiX="320" guiY="1050" id="SPREADSHEET_DATA_WRITER6" sheet="ServerRoleMemberships" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY">
+<attr name="guiDescription"><![CDATA[ServerRoleMemberships]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER6:0" guiBendpoints="" guiRouter="Manhattan" id="Edge30" inPort="Port 0 (input)" metadata="Metadata7" outPort="Port 0 (out)" toNode="SPREADSHEET_DATA_WRITER6:0"/>
+</Phase>
+<Phase number="80">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="1200" id="DATABASE_READER7" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT * FROM _meta.sec.vwEndpoints
+ORDER BY HostName, EndpointName]]></attr>
+<attr name="guiDescription"><![CDATA[Endpoints]]></attr>
+</Node>
+<Node existingSheetsActions="CLEAR_SHEETS" fileURL="${DATAOUT_DIR}/${outfile}" guiName="SpreadsheetDataWriter" guiX="320" guiY="1200" id="SPREADSHEET_DATA_WRITER7" sheet="Endpoints" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY">
+<attr name="guiDescription"><![CDATA[Endpoints]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER7:0" guiBendpoints="" guiRouter="Manhattan" id="Edge31" inPort="Port 0 (input)" metadata="Metadata8" outPort="Port 0 (out)" toNode="SPREADSHEET_DATA_WRITER7:0"/>
+</Phase>
+</Graph>

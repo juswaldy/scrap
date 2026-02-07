@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Fri Oct 03 14:07:26 PDT 2025" guiVersion="7.1.0.8" id="1759526289477" licenseCode="CLCDSTWUXX28767030SP" name="00-readytt" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/TheMetadata.fmt" id="Metadata0"/>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="|" name="recordName1" recordDelimiter="\r\n" type="delimited"/>
+<Sql connection="JDBC0" sqlOptimization="true" sqlQuery="SELECT * FROM ${catalog}.${schema}.${object}" unknownJdbcTypesAsString="true"/>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/${host}.cfg" id="JDBC0" type="JDBC"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC1" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="AP_MASTER"/>
+<GraphParameter name="filter"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="dctInsertStatement" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="145" guiY="100" id="DBEXECUTE" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[USE [${catalog}]
+IF (OBJECTPROPERTY(OBJECT_ID('[${catalog}].[Staging].[${schema}.${object}]'), 'TableHasIdentity') = 1)
+	SET IDENTITY_INSERT [${catalog}].[Staging].[${schema}.${object}] ON
+]]></attr>
+</Node>
+<Edge fromNode="DBEXECUTE:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" outPort="Port 0 (procedure output)" toNode="TRASH:0"/>
+</Phase>
+<Phase number="10">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="345" guiY="275" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT * FROM [${catalog}].[${schema}].[${object}]
+${filter}]]></attr>
+<attr name="guiDescription"><![CDATA[Read source data]]></attr>
+</Node>
+<Node batchMode="true" dbConnection="JDBC1" dbTable="[${catalog}].[Staging].[${schema}.${object}]" guiName="DatabaseWriter" guiX="620" guiY="325" id="DATABASE_WRITER" type="DB_OUTPUT_TABLE">
+<attr name="guiDescription"><![CDATA[Write to staging]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (out)" toNode="DATABASE_WRITER:0"/>
+<Edge fromNode="DATABASE_WRITER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 1 (in)" outPort="Port 0 (rejected)" toNode="TRASH:1"/>
+</Phase>
+<Phase number="15">
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="395" guiY="500" id="DBEXECUTE1" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[USE [${catalog}]
+IF (OBJECTPROPERTY(OBJECT_ID('[${catalog}].[Staging].[${schema}.${object}]'), 'TableHasIdentity') = 1)
+	SET IDENTITY_INSERT [${catalog}].[Staging].[${schema}.${object}] OFF
+]]></attr>
+</Node>
+<Node guiName="Trash" guiX="1120" guiY="250" id="TRASH" type="TRASH"/>
+<Edge fromNode="DBEXECUTE1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 2 (in)" outPort="Port 0 (procedure output)" toNode="TRASH:2"/>
+</Phase>
+</Graph>

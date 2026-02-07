@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 20 14:09:30 PDT 2025" guiVersion="7.1.0.8" id="1761335290884" licenseCode="CLCDSTWUXX28767030SP" name="copy-salesforce-source-to-bronze" showComponentDetails="true">
+<Global>
+<Metadata id="Metadata0">
+<Record fieldDelimiter="," name="Contact" recordDelimiter="\n" type="delimited">
+<Field name="Id" salesforce_field_type="id" type="string"/>
+<Field name="IsDeleted" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="MasterRecordId" salesforce_field_type="reference" type="string"/>
+<Field name="AccountId" salesforce_field_type="reference" type="string"/>
+<Field name="LastName" salesforce_field_type="string" type="string"/>
+<Field name="FirstName" salesforce_field_type="string" type="string"/>
+<Field name="Salutation" salesforce_field_type="picklist" type="string"/>
+<Field name="MiddleName" salesforce_field_type="string" type="string"/>
+<Field name="Name" salesforce_field_type="string" type="string"/>
+<Field name="RecordTypeId" salesforce_field_type="reference" type="string"/>
+<Field name="OtherStreet" salesforce_field_type="textarea" type="string"/>
+<Field name="OtherCity" salesforce_field_type="string" type="string"/>
+<Field name="OtherState" salesforce_field_type="string" type="string"/>
+<Field name="OtherPostalCode" salesforce_field_type="string" type="string"/>
+<Field name="OtherCountry" salesforce_field_type="string" type="string"/>
+<Field length="18" name="OtherLatitude" salesforce_field_type="_double" scale="15" trim="true" type="decimal"/>
+<Field length="18" name="OtherLongitude" salesforce_field_type="_double" scale="15" trim="true" type="decimal"/>
+<Field name="OtherGeocodeAccuracy" salesforce_field_type="picklist" type="string"/>
+<Field name="MailingStreet" salesforce_field_type="textarea" type="string"/>
+<Field name="MailingCity" salesforce_field_type="string" type="string"/>
+<Field name="MailingState" salesforce_field_type="string" type="string"/>
+<Field name="MailingPostalCode" salesforce_field_type="string" type="string"/>
+<Field name="MailingCountry" salesforce_field_type="string" type="string"/>
+<Field length="18" name="MailingLatitude" salesforce_field_type="_double" scale="15" trim="true" type="decimal"/>
+<Field length="18" name="MailingLongitude" salesforce_field_type="_double" scale="15" trim="true" type="decimal"/>
+<Field name="MailingGeocodeAccuracy" salesforce_field_type="picklist" type="string"/>
+<Field name="Phone" salesforce_field_type="phone" type="string"/>
+<Field name="Fax" salesforce_field_type="phone" type="string"/>
+<Field name="MobilePhone" salesforce_field_type="phone" type="string"/>
+<Field name="HomePhone" salesforce_field_type="phone" type="string"/>
+<Field name="OtherPhone" salesforce_field_type="phone" type="string"/>
+<Field name="AssistantPhone" salesforce_field_type="phone" type="string"/>
+<Field name="ReportsToId" salesforce_field_type="reference" type="string"/>
+<Field name="Email" salesforce_field_type="email" type="string"/>
+<Field name="Title" salesforce_field_type="string" type="string"/>
+<Field name="Department" salesforce_field_type="string" type="string"/>
+<Field name="AssistantName" salesforce_field_type="string" type="string"/>
+<Field name="LeadSource" salesforce_field_type="picklist" type="string"/>
+<Field format="yyyy-MM-dd" name="Birthdate" salesforce_field_type="date" timeZone="UTC" trim="true" type="date"/>
+<Field name="Description" salesforce_field_type="textarea" type="string"/>
+<Field name="OwnerId" salesforce_field_type="reference" type="string"/>
+<Field name="HasOptedOutOfEmail" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="HasOptedOutOfFax" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="CreatedDate" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field name="CreatedById" salesforce_field_type="reference" type="string"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="LastModifiedDate" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field name="LastModifiedById" salesforce_field_type="reference" type="string"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="SystemModstamp" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field format="yyyy-MM-dd" name="LastActivityDate" salesforce_field_type="date" timeZone="UTC" trim="true" type="date"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="LastCURequestDate" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="LastCUUpdateDate" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="LastViewedDate" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="LastReferencedDate" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field name="EmailBouncedReason" salesforce_field_type="string" type="string"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="EmailBouncedDate" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field name="IsEmailBounced" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="PhotoUrl" salesforce_field_type="url" type="string"/>
+<Field name="Jigsaw" salesforce_field_type="string" type="string"/>
+<Field name="JigsawContactId" salesforce_field_type="string" type="string"/>
+<Field name="Source_Code__c" salesforce_field_type="reference" type="string"/>
+<Field name="EnrollmentrxRx__Active_Enrollment_Opportunity__c" salesforce_field_type="reference" type="string"/>
+<Field name="Questions_Inquiry__c" salesforce_field_type="textarea" type="string"/>
+<Field name="EnrollmentrxRx__Create_Touch_Point__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="EnrollmentrxRx__Gender__c" salesforce_field_type="picklist" type="string"/>
+<Field name="EnrollmentrxRx__Has_EO_Check__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="EnrollmentrxRx__High_School_Code__c" salesforce_field_type="string" type="string"/>
+<Field name="EnrollmentrxRx__How_did_you_hear_about_us__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="ERx_Events__Random_String__c" salesforce_field_type="string" type="string"/>
+<Field name="EnrollmentrxRx__SIS_ID__c" salesforce_field_type="string" type="string"/>
+<Field name="EnrollmentrxRx__Secondary_Email__c" salesforce_field_type="email" type="string"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="EnrollmentrxRx__Status_Modified_Date__c" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field name="Height__c" salesforce_field_type="string" type="string"/>
+<Field name="ERx_Events__How_did_you_hear_about_us__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="Aboriginal_Identity__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="Aboriginal_Student__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Active_Application_Catalog__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Application_Status__c" salesforce_field_type="string" type="string"/>
+<Field length="18" name="AdmLetter_International_Student__c" salesforce_field_type="_double" scale="0" trim="true" type="decimal"/>
+<Field name="Area_of_Study_Txt__c" salesforce_field_type="textarea" type="string"/>
+<Field name="Birth_Name__c" salesforce_field_type="string" type="string"/>
+<Field name="Canada_Status__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Candidate_Disqualified__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="Candidate_call_time__c" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field name="Competitor__c" salesforce_field_type="reference" type="string"/>
+<Field name="Country_of_Citizenship__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Create_Portal_User__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Current_Ed_Level__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Email_Opt_In__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="English_Primary_Language__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Grade_Level__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Housing_Status__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Is_Locked_By_Agent__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field format="yyyy-MM-dd" name="Last_Touch_Point_Date__c" salesforce_field_type="date" timeZone="UTC" trim="true" type="date"/>
+<Field name="Last_Wrap_Up_Code__c" salesforce_field_type="string" type="string"/>
+<Field name="LocationTxt__c" salesforce_field_type="string" type="string"/>
+<Field name="Location_Campus__c" salesforce_field_type="reference" type="string"/>
+<Field name="Locked_By_Agent_User__c" salesforce_field_type="reference" type="string"/>
+<Field name="MailingCity__c" salesforce_field_type="string" type="string"/>
+<Field name="MailingCountry__c" salesforce_field_type="picklist" type="string"/>
+<Field name="MailingState_ProvinceTxt__c" salesforce_field_type="string" type="string"/>
+<Field name="MailingState_Province_PL__c" salesforce_field_type="picklist" type="string"/>
+<Field name="MailingStreetLine1__c" salesforce_field_type="string" type="string"/>
+<Field name="MailingStreetLine2__c" salesforce_field_type="string" type="string"/>
+<Field name="MailingStreetLine3__c" salesforce_field_type="string" type="string"/>
+<Field name="MailingZip_PostalCode__c" salesforce_field_type="string" type="string"/>
+<Field name="Manual_Ownership_Override__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Middle_Initial__c" salesforce_field_type="string" type="string"/>
+<Field name="National_Student_Status__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Original_Region__c" salesforce_field_type="textarea" type="string"/>
+<Field name="Other_Relatives_Attend_TWU__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Other_Relatives_TWU_Relationships__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="Parents_Info_Provided__c" salesforce_field_type="picklist" type="string"/>
+<Field name="PermCity__c" salesforce_field_type="string" type="string"/>
+<Field name="PermCountry__c" salesforce_field_type="picklist" type="string"/>
+<Field name="PermState_ProvPL__c" salesforce_field_type="picklist" type="string"/>
+<Field name="PermState_ProvTxt__c" salesforce_field_type="string" type="string"/>
+<Field name="PermStreetLine1__c" salesforce_field_type="string" type="string"/>
+<Field name="PermStreetLine2__c" salesforce_field_type="string" type="string"/>
+<Field name="PermStreetLine3__c" salesforce_field_type="string" type="string"/>
+<Field name="PermZipPostalCode__c" salesforce_field_type="string" type="string"/>
+<Field name="Perm_Address_Same__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Phone_Numbers_Missing__c" salesforce_field_type="string" type="string"/>
+<Field name="Preferred_First_Name__c" salesforce_field_type="string" type="string"/>
+<Field name="On_Scotts_List__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Receive_Texts__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Active_Application_Housing_Application__c" salesforce_field_type="string" type="string"/>
+<Field name="School_RFI__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Siblings_Attended_TWU__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Siblings__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Social_Insurance_Number__c" salesforce_field_type="encryptedstring" type="string"/>
+<Field name="Social_Security_Number__c" salesforce_field_type="encryptedstring" type="string"/>
+<Field name="Suffix__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Work_Phone__c" salesforce_field_type="phone" type="string"/>
+<Field name="Entrance_Term_Inquiry__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Stream_AQ_ID__c" salesforce_field_type="string" type="string"/>
+<Field name="School_Name_Text__c" salesforce_field_type="string" type="string"/>
+<Field name="Program_of_Interest_Text__c" salesforce_field_type="string" type="string"/>
+<Field name="Source_Code_Text__c" salesforce_field_type="string" type="string"/>
+<Field name="Preferred_Or_First_Name__c" salesforce_field_type="string" type="string"/>
+<Field name="Attended_Individual_Visit__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Comments_Inquiry__c" salesforce_field_type="textarea" type="string"/>
+<Field name="Level_of_Interest__c" salesforce_field_type="picklist" type="string"/>
+<Field name="ESLI_Student_Number__c" salesforce_field_type="string" type="string"/>
+<Field name="SendAdmissionsTwupassPasswordResetEmail__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Payment_Received__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Active_Application_Program_of_Interest__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Application_Entrance_Term__c" salesforce_field_type="string" type="string"/>
+<Field format="yyyy-MM-dd'T'HH:mm:ss.SSSXX" name="Date_TWU_Pass_Email_Sent__c" salesforce_field_type="datetime" timeZone="UTC" trim="true" type="date"/>
+<Field name="Concert_Name__c" salesforce_field_type="string" type="string"/>
+<Field name="ERx_Forms__Create_Portal_User__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Active_Live_Event_Campaign_Name__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Degree_Record__c" salesforce_field_type="reference" type="string"/>
+<Field length="5" name="Fall_Unapproved_Credits__c" salesforce_field_type="_double" scale="0" trim="true" type="decimal"/>
+<Field name="ERx_Forms__Create_User_with_Profile__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Current_Club_Team__c" salesforce_field_type="string" type="string"/>
+<Field name="Primary_Position__c" salesforce_field_type="string" type="string"/>
+<Field name="Secondary_Position__c" salesforce_field_type="string" type="string"/>
+<Field name="Playing_Strengths__c" salesforce_field_type="textarea" type="string"/>
+<Field name="Playing_Weaknesses__c" salesforce_field_type="textarea" type="string"/>
+<Field name="Dominant_Foot__c" salesforce_field_type="string" type="string"/>
+<Field name="Coaching_Reference_Contact__c" salesforce_field_type="string" type="string"/>
+<Field name="ERx_Forms__TestClassPicklist__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="Anticipated_HS_Grad_Year__c" salesforce_field_type="string" type="string"/>
+<Field length="18" name="Distance_from_TWU__c" salesforce_field_type="_double" scale="2" trim="true" type="decimal"/>
+<Field name="Preview_Weekend_Status__c" salesforce_field_type="picklist" type="string"/>
+<Field name="SE_Student_Rating__c" salesforce_field_type="picklist" type="string"/>
+<Field name="SE_Student_Top_Barrier__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__AlternateEmail__c" salesforce_field_type="email" type="string"/>
+<Field name="hed__Citizenship__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__Country_of_Origin__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__Current_Address__c" salesforce_field_type="reference" type="string"/>
+<Field name="hed__Deceased__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="hed__Do_Not_Contact__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="hed__Dual_Citizenship__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__Ethnicity__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__Exclude_from_Household_Formal_Greeting__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="hed__Exclude_from_Household_Informal_Greeting__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="hed__Exclude_from_Household_Name__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="hed__FERPA__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="hed__Financial_Aid_Applicant__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="hed__Gender__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__HIPAA_Detail__c" salesforce_field_type="textarea" type="string"/>
+<Field name="hed__HIPAA__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="hed__Military_Background__c" salesforce_field_type="textarea" type="string"/>
+<Field name="hed__Military_Service__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="hed__Naming_Exclusions__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="hed__PreferredPhone__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__Preferred_Email__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__Primary_Address_Type__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__Primary_Household__c" salesforce_field_type="reference" type="string"/>
+<Field name="hed__Primary_Organization__c" salesforce_field_type="reference" type="string"/>
+<Field name="hed__Race__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="hed__Religion__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__Secondary_Address_Type__c" salesforce_field_type="picklist" type="string"/>
+<Field name="hed__Social_Security_Number__c" salesforce_field_type="encryptedstring" type="string"/>
+<Field name="hed__UniversityEmail__c" salesforce_field_type="email" type="string"/>
+<Field name="hed__WorkEmail__c" salesforce_field_type="email" type="string"/>
+<Field name="hed__WorkPhone__c" salesforce_field_type="phone" type="string"/>
+<Field name="hed__Work_Address__c" salesforce_field_type="string" type="string"/>
+<Field name="hed__is_Address_Override__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Program_of_Interest_HEDA__c" salesforce_field_type="reference" type="string"/>
+<Field name="School_HEDA__c" salesforce_field_type="reference" type="string"/>
+<Field name="Stream_HEDA__c" salesforce_field_type="reference" type="string"/>
+<Field name="Athletic_Status__c" salesforce_field_type="picklist" type="string"/>
+<Field name="EnrollmentrxRx__Admissions_Status__c" salesforce_field_type="string" type="string"/>
+<Field name="Standing_Reach__c" salesforce_field_type="string" type="string"/>
+<Field name="Spike_Touch__c" salesforce_field_type="string" type="string"/>
+<Field name="Block_Touch__c" salesforce_field_type="string" type="string"/>
+<Field name="Athletic_Video_Link_1__c" salesforce_field_type="url" type="string"/>
+<Field name="Athletic_Video_Link_2__c" salesforce_field_type="url" type="string"/>
+<Field name="Mogli_SMS__GenAI_Summary_Rich_Text__c" salesforce_field_type="textarea" type="string"/>
+<Field name="Primary_Event_Best__c" salesforce_field_type="string" type="string"/>
+<Field name="AgentFilter__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Training_Years__c" salesforce_field_type="string" type="string"/>
+<Field name="Secondary_Event_Best__c" salesforce_field_type="string" type="string"/>
+<Field name="X40m_Sprint_Time__c" salesforce_field_type="string" type="string"/>
+<Field name="UG_Events_Program_List__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Marketing_Subscriptions__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="et4ae5__HasOptedOutOfMobile__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Body_Mass__c" salesforce_field_type="string" type="string"/>
+<Field length="18" name="vy_report__Vidyard_Count__c" salesforce_field_type="_double" scale="0" trim="true" type="decimal"/>
+<Field name="Stream_Text__c" salesforce_field_type="string" type="string"/>
+<Field name="Mogli_SMS__Avatar_URL__c" salesforce_field_type="string" type="string"/>
+<Field name="Athletic_Team__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Coaches_Assessment__c" salesforce_field_type="string" type="string"/>
+<Field name="Agent_Name_Text__c" salesforce_field_type="string" type="string"/>
+<Field name="Agent_Email_Text__c" salesforce_field_type="string" type="string"/>
+<Field name="ERx_Forms__SSN__c" salesforce_field_type="encryptedstring" type="string"/>
+<Field name="Use_First_Name_Only__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Letter_Last_Name__c" salesforce_field_type="string" type="string"/>
+<Field name="Agent_Communication__c" salesforce_field_type="picklist" type="string"/>
+<Field name="ESLI_TLC_Current_Level__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Agent_Status__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Agent_Application_Number__c" salesforce_field_type="string" type="string"/>
+<Field name="Agent_App_Notes__c" salesforce_field_type="string" type="string"/>
+<Field name="Individual_Visit_Status__c" salesforce_field_type="string" type="string"/>
+<Field name="Calling_AC__c" salesforce_field_type="string" type="string"/>
+<Field name="Holds__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="GLOBAL__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Academic_Advisor__c" salesforce_field_type="string" type="string"/>
+<Field length="2" name="dlrs_Num_Current_Semesters__c" salesforce_field_type="_double" scale="0" trim="true" type="decimal"/>
+<Field name="Active_Degree_Major_1__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Degree_Owner__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Degree_Owner_Email__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Degree_Stream__c" salesforce_field_type="string" type="string"/>
+<Field name="Current_Unix_Timestamp__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Degree_Owner_Mobile__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Degree_Owner_Title__c" salesforce_field_type="string" type="string"/>
+<Field name="Primary_Semester_Term__c" salesforce_field_type="string" type="string"/>
+<Field name="Primary_Semester_Athletic_Team__c" salesforce_field_type="string" type="string"/>
+<Field name="Courses_of_Interest__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Application_Stream__c" salesforce_field_type="string" type="string"/>
+<Field name="Unofficial_Transcript__c" salesforce_field_type="string" type="string"/>
+<Field name="Active_Application_Location__c" salesforce_field_type="string" type="string"/>
+<Field name="Registration_Group__c" salesforce_field_type="string" type="string"/>
+<Field length="18" name="Active_Degree_Career_Earned_Credits__c" salesforce_field_type="_double" scale="2" trim="true" type="decimal"/>
+<Field name="Communication_Rating__c" salesforce_field_type="string" type="string"/>
+<Field name="GCLID__c" salesforce_field_type="string" type="string"/>
+<Field name="Regional_Connection_Hubs__c" salesforce_field_type="picklist" type="string"/>
+<Field name="TWU_Chapter_Name__c" salesforce_field_type="string" type="string"/>
+<Field name="TWU_Network_Name__c" salesforce_field_type="string" type="string"/>
+<Field name="Registration_Type__c" salesforce_field_type="string" type="string"/>
+<Field name="UG_Events_Level_of_Study__c" salesforce_field_type="picklist" type="string"/>
+<Field name="GR_Events_Level_of_Study__c" salesforce_field_type="picklist" type="string"/>
+<Field name="GR_Events_Program__c" salesforce_field_type="picklist" type="string"/>
+<Field name="DC_Events_Program_List__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Reason_for_Interest__c" salesforce_field_type="picklist" type="string"/>
+<Field name="et4ae5__Mobile_Country_Code__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Fall_2021_Foundations_Course__c" salesforce_field_type="string" type="string"/>
+<Field name="Fall2021PeerInstructor__c" salesforce_field_type="string" type="string"/>
+<Field name="Marketing_Subscription_Enrolment__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="Marketing_Subscription_StudentSuccess__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="Marketing_Subscription_Advancement__c" salesforce_field_type="multipicklist" type="string"/>
+<Field name="Primary_Organization_Not_Found__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="TWU_Employee__c" salesforce_field_type="picklist" type="string"/>
+<Field name="TWU_Alumni__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Siblings_Names__c" salesforce_field_type="textarea" type="string"/>
+<Field name="Unsubscribed_via_email_name__c" salesforce_field_type="string" type="string"/>
+<Field name="Jenzabar_Tel_Web_Group_Code__c" salesforce_field_type="string" type="string"/>
+<Field name="PreOrientation_Event_URL__c" salesforce_field_type="string" type="string"/>
+<Field length="18" name="Primary_Semester_Credit_Hours__c" salesforce_field_type="_double" scale="0" trim="true" type="decimal"/>
+<Field name="Prospect_Rating__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Active_Application_Applicant_Rating__c" salesforce_field_type="string" type="string"/>
+<Field name="Text_Upload_Field__c" salesforce_field_type="string" type="string"/>
+<Field name="Team_specific_RFI__c" salesforce_field_type="string" type="string"/>
+<Field name="Orientation_URL__c" salesforce_field_type="string" type="string"/>
+<Field format="yyyy-MM-dd" name="Team_Specific_RFI_Completion_Date__c" salesforce_field_type="date" timeZone="UTC" trim="true" type="date"/>
+<Field name="Program_Modality__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Current_Student_Status__c" salesforce_field_type="picklist" type="string"/>
+<Field name="Active_Application_Agency__c" salesforce_field_type="string" type="string"/>
+<Field format="yyyy-MM-dd" name="HS_Data_Date__c" salesforce_field_type="date" timeZone="UTC" trim="true" type="date"/>
+<Field name="HS_Overall_Score__c" salesforce_field_type="picklist" type="string"/>
+<Field name="HS_Academic_Habits__c" salesforce_field_type="picklist" type="string"/>
+<Field name="HS_Academic_Confidence__c" salesforce_field_type="picklist" type="string"/>
+<Field name="HS_Financial_Health__c" salesforce_field_type="picklist" type="string"/>
+<Field name="HS_Persistent_Grit__c" salesforce_field_type="picklist" type="string"/>
+<Field name="HS_Interpersonal_Maturity__c" salesforce_field_type="picklist" type="string"/>
+<Field name="HS_Stress_Management__c" salesforce_field_type="picklist" type="string"/>
+<Field name="HS_Social_Interactions__c" salesforce_field_type="picklist" type="string"/>
+<Field name="HS_Survey_Code__c" salesforce_field_type="string" type="string"/>
+<Field name="Syncs_with_Marketing_Cloud__c" salesforce_field_type="_boolean" trim="true" type="boolean"/>
+<Field name="Academic_Program_Term__c" salesforce_field_type="reference" type="string"/>
+</Record>
+</Metadata>
+<Connection config="sandbox://Common/conn/ERx.cfg" id="ERXPROD" type="SALESFORCE"/>
+<GraphParameters>
+<GraphParameter name="host" value="ERx"/>
+<GraphParameter name="catalog" value="ERx"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="Contact"/>
+<GraphParameter name="filter"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node guiName="SalesforceBulkReader" guiX="370" guiY="225" id="SALESFORCE_BULK_READER" sfConnection="ERXPROD" type="SALESFORCE_BULK_READER">
+<attr name="soqlQuery"><![CDATA[SELECT Aboriginal_Identity__c, Aboriginal_Student__c, Academic_Advisor__c, Academic_Program_Term__c, AccountId, Active_Application_Agency__c, Active_Application_Applicant_Rating__c, Active_Application_Catalog__c, Active_Application_Entrance_Term__c, Active_Application_Housing_Application__c, Active_Application_Location__c, Active_Application_Program_of_Interest__c, Active_Application_Status__c, Active_Application_Stream__c, Active_Degree_Career_Earned_Credits__c, Active_Degree_Major_1__c, Active_Degree_Owner__c, Active_Degree_Owner_Email__c, Active_Degree_Owner_Mobile__c, Active_Degree_Owner_Title__c, Active_Degree_Record__c, Active_Degree_Stream__c, Active_Live_Event_Campaign_Name__c, AdmLetter_International_Student__c, Agent_App_Notes__c, Agent_Application_Number__c, Agent_Communication__c, Agent_Email_Text__c, Agent_Name_Text__c, Agent_Status__c, AgentFilter__c, Anticipated_HS_Grad_Year__c, Area_of_Study_Txt__c, AssistantName, AssistantPhone, Athletic_Status__c, Athletic_Team__c, Athletic_Video_Link_1__c, Athletic_Video_Link_2__c, Attended_Individual_Visit__c, Birth_Name__c, Birthdate, Block_Touch__c, Body_Mass__c, Calling_AC__c, Canada_Status__c, Candidate_call_time__c, Candidate_Disqualified__c, Coaches_Assessment__c, Coaching_Reference_Contact__c, Comments_Inquiry__c, Communication_Rating__c, Competitor__c, Concert_Name__c, Country_of_Citizenship__c, Courses_of_Interest__c, Create_Portal_User__c, CreatedById, CreatedDate, Current_Club_Team__c, Current_Ed_Level__c, Current_Student_Status__c, Current_Unix_Timestamp__c, Date_TWU_Pass_Email_Sent__c, DC_Events_Program_List__c, Department, Description, Distance_from_TWU__c, dlrs_Num_Current_Semesters__c, Dominant_Foot__c, Email, Email_Opt_In__c, EmailBouncedDate, EmailBouncedReason, English_Primary_Language__c, EnrollmentrxRx__Active_Enrollment_Opportunity__c, EnrollmentrxRx__Admissions_Status__c, EnrollmentrxRx__Create_Touch_Point__c, EnrollmentrxRx__Gender__c, EnrollmentrxRx__Has_EO_Check__c, EnrollmentrxRx__High_School_Code__c, EnrollmentrxRx__How_did_you_hear_about_us__c, EnrollmentrxRx__Secondary_Email__c, EnrollmentrxRx__SIS_ID__c, EnrollmentrxRx__Status_Modified_Date__c, Entrance_Term_Inquiry__c, ERx_Events__How_did_you_hear_about_us__c, ERx_Events__Random_String__c, ERx_Forms__Create_Portal_User__c, ERx_Forms__Create_User_with_Profile__c, ERx_Forms__SSN__c, ERx_Forms__TestClassPicklist__c, ESLI_Student_Number__c, ESLI_TLC_Current_Level__c, et4ae5__HasOptedOutOfMobile__c, et4ae5__Mobile_Country_Code__c, Fall2021PeerInstructor__c, Fall_2021_Foundations_Course__c, Fall_Unapproved_Credits__c, Fax, FirstName, GCLID__c, GLOBAL__c, GR_Events_Level_of_Study__c, GR_Events_Program__c, Grade_Level__c, HasOptedOutOfEmail, HasOptedOutOfFax, hed__AlternateEmail__c, hed__Citizenship__c, hed__Country_of_Origin__c, hed__Current_Address__c, hed__Deceased__c, hed__Do_Not_Contact__c, hed__Dual_Citizenship__c, hed__Ethnicity__c, hed__Exclude_from_Household_Formal_Greeting__c, hed__Exclude_from_Household_Informal_Greeting__c, hed__Exclude_from_Household_Name__c, hed__FERPA__c, hed__Financial_Aid_Applicant__c, hed__Gender__c, hed__HIPAA__c, hed__HIPAA_Detail__c, hed__is_Address_Override__c, hed__Military_Background__c, hed__Military_Service__c, hed__Naming_Exclusions__c, hed__Preferred_Email__c, hed__PreferredPhone__c, hed__Primary_Address_Type__c, hed__Primary_Household__c, hed__Primary_Organization__c, hed__Race__c, hed__Religion__c, hed__Secondary_Address_Type__c, hed__Social_Security_Number__c, hed__UniversityEmail__c, hed__Work_Address__c, hed__WorkEmail__c, hed__WorkPhone__c, Height__c, Holds__c, HomePhone, Housing_Status__c, HS_Academic_Confidence__c, HS_Academic_Habits__c, HS_Data_Date__c, HS_Financial_Health__c, HS_Interpersonal_Maturity__c, HS_Overall_Score__c, HS_Persistent_Grit__c, HS_Social_Interactions__c, HS_Stress_Management__c, HS_Survey_Code__c, Id, Individual_Visit_Status__c, Is_Locked_By_Agent__c, IsDeleted, IsEmailBounced, Jenzabar_Tel_Web_Group_Code__c, Jigsaw, JigsawContactId, Last_Touch_Point_Date__c, Last_Wrap_Up_Code__c, LastActivityDate, LastCURequestDate, LastCUUpdateDate, LastModifiedById, LastModifiedDate, LastName, LastReferencedDate, LastViewedDate, LeadSource, Letter_Last_Name__c, Level_of_Interest__c, Location_Campus__c, LocationTxt__c, Locked_By_Agent_User__c, MailingCity, MailingCity__c, MailingCountry, MailingCountry__c, MailingGeocodeAccuracy, MailingLatitude, MailingLongitude, MailingPostalCode, MailingState, MailingState_Province_PL__c, MailingState_ProvinceTxt__c, MailingStreet, MailingStreetLine1__c, MailingStreetLine2__c, MailingStreetLine3__c, MailingZip_PostalCode__c, Manual_Ownership_Override__c, Marketing_Subscription_Advancement__c, Marketing_Subscription_Enrolment__c, Marketing_Subscription_StudentSuccess__c, Marketing_Subscriptions__c, MasterRecordId, Middle_Initial__c, MiddleName, MobilePhone, Mogli_SMS__Avatar_URL__c, Mogli_SMS__GenAI_Summary_Rich_Text__c, Name, National_Student_Status__c, On_Scotts_List__c, Orientation_URL__c, Original_Region__c, Other_Relatives_Attend_TWU__c, Other_Relatives_TWU_Relationships__c, OtherCity, OtherCountry, OtherGeocodeAccuracy, OtherLatitude, OtherLongitude, OtherPhone, OtherPostalCode, OtherState, OtherStreet, OwnerId, Parents_Info_Provided__c, Payment_Received__c, Perm_Address_Same__c, PermCity__c, PermCountry__c, PermState_ProvPL__c, PermState_ProvTxt__c, PermStreetLine1__c, PermStreetLine2__c, PermStreetLine3__c, PermZipPostalCode__c, Phone, Phone_Numbers_Missing__c, PhotoUrl, Playing_Strengths__c, Playing_Weaknesses__c, Preferred_First_Name__c, Preferred_Or_First_Name__c, PreOrientation_Event_URL__c, Preview_Weekend_Status__c, Primary_Event_Best__c, Primary_Organization_Not_Found__c, Primary_Position__c, Primary_Semester_Athletic_Team__c, Primary_Semester_Credit_Hours__c, Primary_Semester_Term__c, Program_Modality__c, Program_of_Interest_HEDA__c, Program_of_Interest_Text__c, Prospect_Rating__c, Questions_Inquiry__c, Reason_for_Interest__c, Receive_Texts__c, RecordTypeId, Regional_Connection_Hubs__c, Registration_Group__c, Registration_Type__c, ReportsToId, Salutation, School_HEDA__c, School_Name_Text__c, School_RFI__c, SE_Student_Rating__c, SE_Student_Top_Barrier__c, Secondary_Event_Best__c, Secondary_Position__c, SendAdmissionsTwupassPasswordResetEmail__c, Siblings__c, Siblings_Attended_TWU__c, Siblings_Names__c, Social_Insurance_Number__c, Social_Security_Number__c, Source_Code__c, Source_Code_Text__c, Spike_Touch__c, Standing_Reach__c, Stream_AQ_ID__c, Stream_HEDA__c, Stream_Text__c, Suffix__c, Syncs_with_Marketing_Cloud__c, SystemModstamp, Team_specific_RFI__c, Team_Specific_RFI_Completion_Date__c, Text_Upload_Field__c, Title, Training_Years__c, TWU_Alumni__c, TWU_Chapter_Name__c, TWU_Employee__c, TWU_Network_Name__c, UG_Events_Level_of_Study__c, UG_Events_Program_List__c, Unofficial_Transcript__c, Unsubscribed_via_email_name__c, Use_First_Name_Only__c, vy_report__Vidyard_Count__c, Work_Phone__c, X40m_Sprint_Time__c FROM Contact
+LIMIT 5]]></attr>
+</Node>
+<Node guiName="Trash" guiX="895" guiY="325" id="TRASH" type="TRASH"/>
+<Edge fromNode="SALESFORCE_BULK_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="TRASH:0"/>
+</Phase>
+</Graph>

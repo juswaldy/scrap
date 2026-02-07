@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Fri Oct 03 14:07:26 PDT 2025" guiVersion="7.1.0.8" id="1759526289477" licenseCode="CLCDSTWUXX28767030SP" name="00-readytt" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/TheMetadata.fmt" id="Metadata0"/>
+<Connection dbConfig="sandbox://Common/conn/${host}.cfg" id="JDBC0" type="JDBC"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC1" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="AP_MASTER"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="170" guiY="100" id="DBEXECUTE" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[USE [${catalog}];
+DROP TABLE IF EXISTS [${schema}].[${object}];
+ALTER SCHEMA [${schema}] TRANSFER [Staging].[${schema}.${object}];
+EXEC sp_rename '[${schema}].[${schema}.${object}]', '${object}';
+]]></attr>
+<attr name="guiDescription"><![CDATA[Replace bronze with staging]]></attr>
+</Node>
+</Phase>
+<Phase number="1">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="395" guiY="350" id="DATABASE_READER1" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[DECLARE @db NVARCHAR(512) = '${catalog}'
+DECLARE @schema NVARCHAR(512) = '${schema}'
+DECLARE @table NVARCHAR(512) = '${object}'
+SELECT 
+    'CREATE ' + 
+    CASE WHEN I.is_unique = 1 THEN 'UNIQUE ' ELSE '' END +
+    I.type_desc COLLATE DATABASE_DEFAULT + ' INDEX [' +
+    I.name + '] ON [' + @db + '].[' + @schema + '].[' + @table + '] (' +
+    KeyColumns + ')' +
+    ISNULL(' INCLUDE (' + IncludedColumns + ')', '') +
+    ISNULL(' WHERE ' + I.filter_definition, '') + 
+    ' WITH (' +
+    CASE WHEN I.is_padded = 1 THEN 'PAD_INDEX = ON' ELSE 'PAD_INDEX = OFF' END + ', ' +
+    'FILLFACTOR = ' + CAST(CASE WHEN I.fill_factor = 0 THEN 100 ELSE I.fill_factor END AS VARCHAR(3)) + ', ' +
+    'SORT_IN_TEMPDB = OFF, ' +
+    CASE WHEN I.ignore_dup_key = 1 THEN 'IGNORE_DUP_KEY = ON' ELSE 'IGNORE_DUP_KEY = OFF' END + ', ' +
+    CASE WHEN ST.no_recompute = 0 THEN 'STATISTICS_NORECOMPUTE = OFF' ELSE 'STATISTICS_NORECOMPUTE = ON' END + ', ' +
+    'ONLINE = OFF, ' +
+    CASE WHEN I.allow_row_locks = 1 THEN 'ALLOW_ROW_LOCKS = ON' ELSE 'ALLOW_ROW_LOCKS = OFF' END + ', ' +
+    CASE WHEN I.allow_page_locks = 1 THEN 'ALLOW_PAGE_LOCKS = ON' ELSE 'ALLOW_PAGE_LOCKS = OFF' END + 
+    ') ON [' + DS.name + '];' + CHAR(13) AS [CreateIndexScript]
+FROM sys.indexes I
+JOIN sys.tables T ON T.object_id = I.object_id
+JOIN sys.stats ST ON ST.object_id = I.object_id AND ST.stats_id = I.index_id
+JOIN sys.data_spaces DS ON I.data_space_id = DS.data_space_id
+JOIN (
+    SELECT 
+        IC2.object_id, 
+        IC2.index_id,
+        STUFF((
+            SELECT ', [' + C.name + ']' + 
+                   CASE WHEN MAX(CONVERT(INT, IC1.is_descending_key)) = 1 
+                        THEN ' DESC' 
+                        ELSE ' ASC' 
+                   END
+            FROM sys.index_columns IC1
+            JOIN sys.columns C ON C.object_id = IC1.object_id 
+                              AND C.column_id = IC1.column_id 
+                              AND IC1.is_included_column = 0
+            WHERE IC1.object_id = IC2.object_id 
+              AND IC1.index_id = IC2.index_id
+            GROUP BY IC1.object_id, C.name, IC1.index_id
+            ORDER BY MAX(IC1.key_ordinal)
+            FOR XML PATH('')
+        ), 1, 2, '') AS KeyColumns
+    FROM sys.index_columns IC2
+    WHERE IC2.object_id = OBJECT_ID(@schema + '.' + @table)
+    GROUP BY IC2.object_id, IC2.index_id
+) tmp4 ON I.object_id = tmp4.object_id AND I.index_id = tmp4.index_id
+LEFT JOIN (
+    SELECT 
+        IC2.object_id, 
+        IC2.index_id,
+        STUFF((
+            SELECT ', [' + C.name + ']'
+            FROM sys.index_columns IC1
+            JOIN sys.columns C ON C.object_id = IC1.object_id 
+                              AND C.column_id = IC1.column_id 
+                              AND IC1.is_included_column = 1
+            WHERE IC1.object_id = IC2.object_id 
+              AND IC1.index_id = IC2.index_id
+            ORDER BY C.name
+            FOR XML PATH('')
+        ), 1, 2, '') AS IncludedColumns
+    FROM sys.index_columns IC2
+    WHERE IC2.object_id = OBJECT_ID(@schema + '.' + @table)
+    GROUP BY IC2.object_id, IC2.index_id
+) tmp5 ON I.object_id = tmp5.object_id AND I.index_id = tmp5.index_id
+WHERE T.name = @table
+  AND SCHEMA_NAME(T.schema_id) = @schema
+  AND I.type_desc IN ('CLUSTERED', 'NONCLUSTERED')
+  AND I.is_primary_key = 0  -- Exclude primary key (usually handled separately)
+  AND I.is_unique_constraint = 0  -- Exclude unique constraints
+ORDER BY I.name]]></attr>
+<attr name="guiDescription"><![CDATA[Generate index scripts]]></attr>
+</Node>
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="720" guiY="350" id="DBEXECUTE1" type="DB_EXECUTE" url="port:$0.TheString:stream">
+<attr name="guiDescription"><![CDATA[Execute index scripts]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (input parameters)" metadata="Metadata0" outPort="Port 0 (out)" toNode="DBEXECUTE1:0"/>
+</Phase>
+</Graph>

@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Fri Oct 03 14:07:26 PDT 2025" guiVersion="7.1.0.8" id="1759526289477" licenseCode="CLCDSTWUXX28767030SP" name="00-readytt" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/TheMetadata.fmt" id="Metadata0"/>
+<Metadata id="Metadata2">
+<Record fieldDelimiter="|" name="datahub" recordDelimiter="\r\n" type="delimited"/>
+<Sql connection="JDBC1" sqlOptimization="true" sqlQuery="SELECT * FROM [${catalog}].[${schema}].[${object}]" unknownJdbcTypesAsString="true"/>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="|" name="source" recordDelimiter="\r\n" type="delimited"/>
+<Sql connection="JDBC0" sqlOptimization="true" sqlQuery="SELECT * FROM [${catalog}].[${schema}].[${object}]" unknownJdbcTypesAsString="true"/>
+</Metadata>
+<Metadata id="Metadata3">
+<Record fieldDelimiter=";" name="stats" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="schema_name" size="128" type="string"/>
+<Field name="table_name" size="128" type="string"/>
+<Field name="num_rows" size="19" type="long"/>
+<Field length="26" name="total_mb" scale="6" size="27" type="decimal"/>
+<Field length="26" name="used_mb" scale="6" size="27" type="decimal"/>
+<Field length="26" name="dataspace_mb" scale="6" size="27" type="decimal"/>
+<Field name="checksum" type="long"/>
+<Field name="checksum_binary" type="long"/>
+<Field name="is_matching" type="boolean"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/${host}.cfg" id="JDBC0" type="JDBC"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC1" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="STUD_SESS_ASGN_EXT"/>
+<GraphParameter name="filter"/>
+<GraphParameter name="statsquery">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	return """
+DECLARE @schema_name sysname = N'${schema}';
+DECLARE @table_name  sysname = N'${object}';
+WITH base AS (
+    SELECT
+        @schema_name AS schema_name,
+        @table_name AS table_name,
+        COUNT_BIG(*) AS num_rows,
+        CHECKSUM_AGG(CHECKSUM(*)) AS checksum,
+        CHECKSUM_AGG(BINARY_CHECKSUM(*)) AS checksum_binary
+    FROM [${catalog}].[${schema}].[${object}] WITH (NOLOCK) ${filter}
+),
+datasize AS (
+    SELECT
+        (SUM(a.total_pages) * 8.0) / 1024.0 as total_mb,
+        (SUM(a.used_pages) * 8.0) / 1024.0 as used_mb,
+        (SUM(a.data_pages) * 8.0) /1024.0 as dataspace_mb
+    FROM [${catalog}].sys.tables t
+    JOIN [${catalog}].sys.schemas s ON t.schema_id = s.schema_id
+    JOIN [${catalog}].sys.indexes i ON t.object_id = i.object_id
+    JOIN [${catalog}].sys.partitions p ON i.object_id = p.object_id AND i.index_id = p.index_id
+    JOIN [${catalog}].sys.allocation_units a ON p.partition_id = a.container_id
+    WHERE t.is_ms_shipped = 0
+    AND i.OBJECT_ID > 254 AND i.index_id IN (-1,0,1)
+    AND s.name = @schema_name AND t.name = @table_name
+)
+SELECT
+    b.schema_name,
+    b.table_name,
+    b.num_rows,
+    ds.total_mb,
+    ds.used_mb,
+    ds.dataspace_mb,
+    b.checksum,
+    b.checksum_binary
+FROM base AS b
+CROSS JOIN datasize AS ds
+""";
+}]]></attr>
+</GraphParameter>
+<GraphParameter name="processboth" value="true"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="source_num_rows" output="true" type="long"/>
+<Entry input="true" name="source_total_mb" output="true" type="decimal"/>
+<Entry input="true" name="target_total_mb" output="true" type="decimal"/>
+<Entry input="true" name="target_used_mb" output="true" type="decimal"/>
+<Entry input="true" name="target_dataspace_mb" output="true" type="decimal"/>
+<Entry input="true" name="target_checksum" output="true" type="long"/>
+<Entry input="true" name="target_checksum_binary" output="true" type="long"/>
+<Entry input="true" name="is_matching" output="true" type="boolean"/>
+<Entry input="true" name="source_results" output="true" type="string"/>
+<Entry input="true" name="target_results" output="true" type="string"/>
+<Entry input="true" name="source_used_mb" output="true" type="decimal"/>
+<Entry input="true" name="source_dataspace_mb" output="true" type="decimal"/>
+<Entry input="true" name="source_checksum" output="true" type="long"/>
+<Entry input="true" name="source_checksum_binary" output="true" type="long"/>
+<Entry input="true" name="target_num_rows" output="true" type="long"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="545" guiY="100" id="DATABASE_READER" type="DB_INPUT_TABLE" url="port:$0.TheString:stream">
+<attr name="guiDescription"><![CDATA[Get stats from source table]]></attr>
+</Node>
+<Node dbConnection="JDBC1" guiName="DatabaseReader" guiX="545" guiY="300" id="DATABASE_READER1" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[${statsquery}]]></attr>
+<attr name="guiDescription"><![CDATA[Get stats from datahub table]]></attr>
+</Node>
+<Node guiName="Filter" guiX="320" guiY="100" id="FILTER" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+getParamValue("processboth") == "true"]]></attr>
+<attr name="guiDescription"><![CDATA[Process both source and target?]]></attr>
+</Node>
+<Node guiName="GetJobInput" guiX="95" guiY="100" id="GET_JOB_INPUT1" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.TheString = getParamValue("processboth") == "true" ?
+		getParamValue("statsquery") : 
+		concat("SELECT ",
+			"'", getParamValue("schema"), "' schema_name, ",
+			"'", getParamValue("object"), "' table_name, ",
+			num2str($in.0.source_num_rows), " num_rows, ",
+			"NULL total_mb, ",
+			"NULL user_mb, ",
+			"NULL dataspace_mb, ",
+			num2str($in.0.source_checksum), " checksum, ",
+			num2str($in.0.source_checksum_binary), " checksum_binary"
+		);
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Prepare stats query for source table]]></attr>
+</Node>
+<Node guiName="SetJobOutput" guiX="770" guiY="100" id="SET_JOB_OUTPUT" type="SET_JOB_OUTPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.source_num_rows = $in.0.num_rows;
+	$out.0.source_total_mb = $in.0.total_mb;
+	$out.0.source_used_mb = $in.0.used_mb;
+	$out.0.source_dataspace_mb = $in.0.dataspace_mb;
+	$out.0.source_checksum = $in.0.checksum;
+	$out.0.source_checksum_binary = $in.0.checksum_binary;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="SetJobOutput" guiX="770" guiY="300" id="SET_JOB_OUTPUT1" type="SET_JOB_OUTPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.target_num_rows = $in.0.num_rows;
+	$out.0.target_total_mb = $in.0.total_mb;
+	$out.0.target_used_mb = $in.0.used_mb;
+	$out.0.target_dataspace_mb = $in.0.dataspace_mb;
+	$out.0.target_checksum = $in.0.checksum;
+	$out.0.target_checksum_binary = $in.0.checksum_binary;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (out)" toNode="SET_JOB_OUTPUT:0"/>
+<Edge fromNode="DATABASE_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (out)" toNode="SET_JOB_OUTPUT1:0"/>
+<Edge fromNode="FILTER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="DATABASE_READER:0"/>
+<Edge fromNode="GET_JOB_INPUT1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="FILTER:0"/>
+</Phase>
+<Phase number="5">
+<Node guiName="GetJobInput" guiX="770" guiY="500" id="GET_JOB_INPUT" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	dictionary.source_results = concat(num2str($in.0.source_num_rows), '|', num2str($in.0.source_checksum), '|', num2str($in.0.source_checksum_binary));
+	dictionary.target_results = concat(num2str($in.0.target_num_rows), '|', num2str($in.0.target_checksum), '|', num2str($in.0.target_checksum_binary));
+	$out.0.schema_name = getParamValue("schema");
+	$out.0.table_name = getParamValue("object");
+	$out.0.num_rows = $in.0.target_num_rows;
+	$out.0.checksum = $in.0.target_checksum;
+	$out.0.checksum_binary = $in.0.target_checksum_binary;
+	$out.0.dataspace_mb = $in.0.target_dataspace_mb;
+	$out.0.total_mb = $in.0.target_total_mb;
+	$out.0.used_mb = $in.0.target_used_mb;
+	$out.0.is_matching = ($in.0.source_num_rows == $in.0.target_num_rows && $in.0.source_checksum == $in.0.target_checksum && $in.0.source_checksum_binary == $in.0.target_checksum_binary);
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Success" guiX="1045" guiY="500" id="SUCCESS" type="SUCCESS">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.is_matching = $in.0.is_matching;
+	$out.1.source_results = dictionary.source_results;
+	$out.1.target_results = dictionary.target_results;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="GET_JOB_INPUT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (out)" toNode="SUCCESS:0"/>
+</Phase>
+</Graph>

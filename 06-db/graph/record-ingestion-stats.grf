@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Sun Oct 26 19:45:10 PDT 2025" guiVersion="7.1.0.8" id="1761541138396" licenseCode="CLCDSTWUXX28767030SP" name="record-ingestion" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/TheMetadata.fmt" id="Metadata1"/>
+<Metadata id="Metadata0">
+<Record fieldDelimiter="|" name="ingestion" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field name="id" type="long"/>
+<Field name="name" type="string"/>
+<Field name="filter" type="string"/>
+<Field name="numrows" type="long"/>
+<Field name="checksum" type="long"/>
+<Field name="checksum_binary" type="long"/>
+<Field name="datasizemb" scale="5" type="decimal"/>
+<Field name="status" type="string"/>
+<Field name="step" type="string"/>
+<Field name="is_matching" type="string"/>
+<Field name="duration_seconds" type="integer"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="id" value="1"/>
+<GraphParameter name="name" value="ACCT_CMP_1_DEF"/>
+<GraphParameter name="filter"/>
+<GraphParameter name="numrows" value="15"/>
+<GraphParameter name="checksum" value="1735469416"/>
+<GraphParameter name="checksum_binary" value="1099870992"/>
+<GraphParameter name="datasizemb" value="0.006835"/>
+<GraphParameter name="status" value="completed"/>
+<GraphParameter name="step" value="verification"/>
+<GraphParameter name="is_matching" value="true"/>
+<GraphParameter name="duration_seconds" value="1"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DatabaseWriter" guiX="595" guiY="600" id="DATABASE_WRITER" type="DB_OUTPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[INSERT INTO [_meta].[dbo].[_ingestion] (
+_object_id,
+_name,
+_filter,
+_numrows,
+_checksum,
+_checksum_binary,
+_status,
+_duration_seconds
+) VALUES (
+$id,
+$name,
+$filter,
+$numrows,
+$checksum,
+$checksum_binary,
+$status,
+$duration_seconds
+);]]></attr>
+<attr name="guiDescription"><![CDATA[Insert a new ingestion record]]></attr>
+</Node>
+<Node dbConnection="JDBC0" guiName="DatabaseWriter" guiX="395" guiY="150" id="DATABASE_WRITER1" type="DB_OUTPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[UPDATE [_meta].[dbo].[_object] SET
+_numrows = $numrows,
+_checksum = $checksum,
+_checksum_binary = $checksum_binary,
+_datasizemb = $datasizemb,
+_verified = CURRENT_TIMESTAMP
+WHERE _id = $id]]></attr>
+<attr name="guiDescription"><![CDATA[Update verified timestamp in object table]]></attr>
+</Node>
+<Node dbConnection="JDBC0" guiName="DatabaseWriter" guiX="820" guiY="300" id="DATABASE_WRITER2" type="DB_OUTPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[UPDATE [_meta].[dbo].[_object] SET
+_numrows = $numrows,
+_checksum = $checksum,
+_checksum_binary = $checksum_binary,
+_datasizemb = $datasizemb,
+_verified = CURRENT_TIMESTAMP,
+_refreshed = CURRENT_TIMESTAMP
+WHERE _id = $id]]></attr>
+<attr name="guiDescription"><![CDATA[Update verified and refreshed timestamps in object table]]></attr>
+</Node>
+<Node dbConnection="JDBC0" guiName="DatabaseWriter" guiX="820" guiY="475" id="DATABASE_WRITER3" type="DB_OUTPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[UPDATE [_meta].[dbo].[_object] SET
+_numrows = $numrows,
+_checksum = $checksum,
+_checksum_binary = $checksum_binary,
+_datasizemb = $datasizemb,
+_refreshed = CURRENT_TIMESTAMP
+WHERE _id = $id]]></attr>
+<attr name="guiDescription"><![CDATA[Update refreshed timestamp in object table but not verified]]></attr>
+</Node>
+<Node guiName="Filter" guiX="120" guiY="325" id="FILTER" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.step == "verification"]]></attr>
+<attr name="guiDescription"><![CDATA[Verification step?]]></attr>
+</Node>
+<Node guiName="Filter" guiX="595" guiY="300" id="FILTER1" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.status == "completed"]]></attr>
+<attr name="guiDescription"><![CDATA[Completed?]]></attr>
+</Node>
+<Node guiName="GetJobInput" guiX="120" guiY="100" id="GET_JOB_INPUT" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.id = str2long(getParamValue("id"));
+	$out.0.name = getParamValue("name");
+	$out.0.filter = getParamValue("filter");
+	$out.0.numrows = str2long(getParamValue("numrows"));
+	$out.0.checksum = str2long(getParamValue("checksum"));
+	$out.0.checksum_binary = str2long(getParamValue("checksum_binary"));
+	$out.0.datasizemb = str2decimal(getParamValue("datasizemb"));
+	$out.0.status = getParamValue("status");
+	$out.0.step = getParamValue("step");
+	$out.0.is_matching = getParamValue("is_matching");
+	$out.0.duration_seconds = str2integer(getParamValue("duration_seconds"));
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="SimpleCopy" guiX="345" guiY="475" id="SIMPLE_COPY" type="SIMPLE_COPY"/>
+<Node guiName="SimpleGather" guiX="1045" guiY="75" id="SIMPLE_GATHER" type="SIMPLE_GATHER"/>
+<Node guiName="Success" guiX="1245" guiY="75" id="SUCCESS" type="SUCCESS"/>
+<Edge fromNode="DATABASE_WRITER:1" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 2 (in)" outPort="Port 1 (autogenerated)" toNode="SIMPLE_GATHER:2"/>
+<Edge fromNode="DATABASE_WRITER1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 1 (autogenerated)" toNode="SIMPLE_GATHER:0"/>
+<Edge fromNode="DATABASE_WRITER2:1" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 1 (in)" outPort="Port 1 (autogenerated)" toNode="SIMPLE_GATHER:1"/>
+<Edge fromNode="DATABASE_WRITER3:1" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 3 (in)" outPort="Port 1 (autogenerated)" toNode="SIMPLE_GATHER:3"/>
+<Edge fromNode="FILTER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="DATABASE_WRITER1:0"/>
+<Edge fromNode="FILTER:1" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" outPort="Port 1 (rejected)" toNode="SIMPLE_COPY:0"/>
+<Edge fromNode="FILTER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="DATABASE_WRITER2:0"/>
+<Edge fromNode="FILTER1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" outPort="Port 1 (rejected)" toNode="DATABASE_WRITER3:0"/>
+<Edge fromNode="GET_JOB_INPUT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="FILTER:0"/>
+<Edge fromNode="SIMPLE_COPY:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="FILTER1:0"/>
+<Edge fromNode="SIMPLE_COPY:1" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="DATABASE_WRITER:0"/>
+<Edge fromNode="SIMPLE_GATHER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SUCCESS:0"/>
+</Phase>
+</Graph>

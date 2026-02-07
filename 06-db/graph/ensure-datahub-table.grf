@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 20 14:09:30 PDT 2025" guiVersion="7.1.0.8" id="1761158913072" licenseCode="CLCDSTWUXX28767030SP" name="ensure-datahub-table" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/TheMetadata.fmt" id="Metadata0"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="host" value="Aqueduct"/>
+<GraphParameter name="catalog" value="Aqueduct"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="InstitutionalEmail"/>
+<GraphParameter name="area" value="Bronze"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="145" guiY="125" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[DECLARE @db NVARCHAR(512) = '${catalog}'
+DECLARE @schema NVARCHAR(512) = '${schema}'
+DECLARE @table NVARCHAR(512) = '${object}'
+DECLARE @source_object NVARCHAR(512) = QUOTENAME(@db) + '.' + QUOTENAME(@schema) + '.' + QUOTENAME(@table)
+DECLARE @target_object NVARCHAR(512) = CASE
+    WHEN '${area}' = 'Staging' THEN QUOTENAME(@db) + '.' + QUOTENAME('Staging') + '.' + QUOTENAME(@schema + '.' + @table)
+    ELSE @source_object
+    END
+
+SELECT '${object}' objname, OBJECT_ID(@target_object) objid]]></attr>
+<attr name="guiDescription"><![CDATA[Get object id from datahub]]></attr>
+</Node>
+<Node guiName="ExecuteGraph" guiX="720" guiY="325" id="EXECUTE_GRAPH1" jobURL="${GRAPH_DIR}/create-datahub-table.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	string area = getParamValue("area");
+	$out.0.executionLabel = area + ' ' + getParamValue("object");
+	$out.1.host = getParamValue("host");
+	$out.1.catalog = getParamValue("catalog");
+	$out.1.schema = getParamValue("schema");
+	$out.1.object = getParamValue("object");
+	$out.1.area = area;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Create datahub table]]></attr>
+</Node>
+<Node guiName="Fail" guiX="1070" guiY="450" id="FAIL" type="FAIL"/>
+<Node guiName="Filter" guiX="445" guiY="250" id="FILTER" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+isnull($in.0.TheInteger)]]></attr>
+<attr name="guiDescription"><![CDATA[Object id is null?]]></attr>
+</Node>
+<Node guiName="Success" guiX="1070" guiY="275" id="SUCCESS" type="SUCCESS"/>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="FILTER:0"/>
+<Edge fromNode="EXECUTE_GRAPH1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SUCCESS:0"/>
+<Edge fromNode="EXECUTE_GRAPH1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" outPort="Port 1 (error)" toNode="FAIL:0"/>
+<Edge fromNode="FILTER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="EXECUTE_GRAPH1:0"/>
+</Phase>
+</Graph>

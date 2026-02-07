@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 06 12:41:47 PDT 2025" guiVersion="7.1.0.8" id="1760111500730" licenseCode="CLCDSTWUXX28767030SP" name="00-ingest" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/dataobjects.fmt" id="Metadata2"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="type" value="db"/>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="STUD_SESS_ASGN_EXT"/>
+<GraphParameter name="filter" value="SESS_CDE = 'SP26'"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="backupsql" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node guiName="ExecuteGraph" guiX="95" guiY="100" id="EXECUTE_GRAPH" jobURL="${GRAPH_DIR}/create-datahub-table.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.host = getParamValue("host");
+	$out.1.catalog = getParamValue("catalog");
+	$out.1.schema = getParamValue("schema");
+	$out.1.object = getParamValue("object");
+	$out.1.area = "Backup";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Create IT.Backup table with timestamp]]></attr>
+<attr name="outputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.type = getParamValue("type");
+	$out.0.host = getParamValue("host");
+	$out.0.catalog = getParamValue("catalog");
+	$out.0.schema = getParamValue("schema");
+	$out.0.object = $in.2.tablename;
+	$out.0.filter = getParamValue("filter");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Map" guiX="345" guiY="300" id="MAP" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.id = $in.0.id;
+	$out.0.type = $in.0.type;
+	$out.0.name = $in.0.name;
+	$out.0.host = $in.0.host;
+	$out.0.catalog = $in.0.catalog;
+	$out.0.schema = $in.0.schema;
+	$out.0.object = $in.0.object;
+	$out.0.keyfields = $in.0.keyfields;
+	$out.0.filter = $in.0.filter;
+	$out.0.frequency = $in.0.frequency;
+	$out.0.status = $in.0.status;
+	$out.0.description = $in.0.description;
+	$out.0.created = $in.0.created;
+	$out.0.modified = $in.0.modified;
+	$out.0.verified = $in.0.verified;
+	$out.0.refreshed = $in.0.refreshed;
+	$out.0.numrows = $in.0.numrows;
+	$out.0.checksum = $in.0.checksum;
+	$out.0.checksum_binary = $in.0.checksum_binary;
+	$out.0.datasizemb = $in.0.datasizemb;
+	dictionary.backupsql = 	"INSERT INTO [IT].[Backup].[" + $in.0.object + "] SELECT * FROM [${catalog}].[${schema}].[${object}] WHERE ${filter}";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="EXECUTE_GRAPH:0" guiBendpoints="" guiRouter="Manhattan" id="Edge21" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="MAP:0"/>
+<Edge fromNode="MAP:0" guiBendpoints="" guiRouter="Manhattan" id="Edge28" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="DATABASE_WRITER:0"/>
+</Phase>
+<Phase number="5">
+<Node dbConnection="JDBC0" guiName="DatabaseWriter" guiX="570" guiY="300" id="DATABASE_WRITER" type="DB_OUTPUT_TABLE" url="dict:backupsql:discrete">
+<attr name="guiDescription"><![CDATA[Copy from Bronze to IT.Backup]]></attr>
+</Node>
+</Phase>
+</Graph>

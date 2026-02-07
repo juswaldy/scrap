@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 06 12:41:47 PDT 2025" guiVersion="7.1.0.8" id="1760111500730" licenseCode="CLCDSTWUXX28767030SP" name="00-ingest" nature="jobflow" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/dataobjects.fmt" id="Metadata2"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="type" value="db"/>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="STUD_SESS_ASGN_EXT"/>
+<GraphParameter name="filter" value="SESS_CDE = 'SP26'"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="backupsql" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node guiName="DataGenerator" guiX="270" guiY="200" id="DATA_GENERATOR" recordsNumber="9" type="DATA_GENERATOR">
+<attr name="generate"><![CDATA[//#CTL2
+string[] vals = [
+	'STUD_SESS_ASSIGN',
+	'STUD_SESS_ASGN_EXT',
+	'ROOM_ASSIGN',
+	'CM_SESSION_MSTR',
+	'SESS_TABLE',
+	'STUD_LIFE_CHGS_TABLE',
+	'STUD_ROOMMATES',
+	'SESS_BLDG_MASTER',
+	'SESS_ROOM_MASTER'
+];
+integer i = 0;
+
+// Generates output record.
+function integer generate() {
+	$out.0.type = getParamValue("type");
+	$out.0.type = getParamValue("type");
+    $out.0.host = getParamValue("host");
+    $out.0.catalog = getParamValue("catalog");
+    $out.0.schema = getParamValue("schema");
+	$out.0.object = vals[i];
+    $out.0.filter = getParamValue("filter");	
+	i++;
+
+	return OK;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the generate. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if generate() throws an exception.
+// function integer generateOnError(string errorMessage, string stackTrace) {
+// }
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="ExecuteGraph" guiX="570" guiY="200" id="EXECUTE_GRAPH" jobURL="${GRAPH_DIR}/create-backup.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.type = $in.0.type;
+	$out.1.host = $in.0.host;
+	$out.1.catalog = $in.0.catalog;
+	$out.1.schema = $in.0.schema;
+	$out.1.object = $in.0.object;
+	$out.1.filter = $in.0.filter;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="DATA_GENERATOR:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="EXECUTE_GRAPH:0"/>
+</Phase>
+</Graph>

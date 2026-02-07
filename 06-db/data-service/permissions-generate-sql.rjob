@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Mar 31 19:40:51 PDT 2025" guiVersion="7.1.0.8" id="1744249126279" licenseCode="CLCDSTWUXX28767030SP" name="eda" nature="restJob" showComponentDetails="true">
+<Global>
+<EndpointSettings>
+<UrlPath>/datahub/permissions</UrlPath>
+<Description>Generate permissions sql from the given spreadsheet. This data service will return a sql query file which you can then save and open in SSMS, ready to run. A more complete functionality might be coming soon when I have more time. (no promises)&#13;
+&#13;
+Caution: only set debugging to false if you really know what you're doing.</Description>
+<EndpointName>datahub-permissions-generate-sql</EndpointName>
+<Category>Datahub</Category>
+<RequestMethod name="POST"/>
+<RequestParameter defaultValue="true" id="RestJobParameter1" location="form_data" name="debugging" required="true" type="enumeration">
+<Options allowCustomValues="false">
+<Option value="false"/>
+<Option value="true"/>
+</Options>
+</RequestParameter>
+<RequestParameter id="RestJobParameter2" location="form_data" name="dbname" required="true" type="string"/>
+<RequestParameter description="Spreadsheet containing security and permissions info (.xlsx only at this time; max 10MB please)" id="RestJobParameter0" label="Input File" location="form_data" name="input_file" required="true" type="binary_file"/>
+</EndpointSettings>
+<RestJobResponseStatus>
+<JobError>
+<reasonPhrase>Job failed</reasonPhrase>
+<statusCode>500</statusCode>
+<ReasonPhrase>Job failed</ReasonPhrase>
+<StatusCode>500</StatusCode>
+</JobError>
+<Success>
+<statusCode>200</statusCode>
+<StatusCode>200</StatusCode>
+</Success>
+<ValidationError>
+<reasonPhrase>Request validation failed</reasonPhrase>
+<statusCode>400</statusCode>
+<ReasonPhrase>Request validation failed</ReasonPhrase>
+<StatusCode>400</StatusCode>
+</ValidationError>
+</RestJobResponseStatus>
+<Metadata id="Metadata1">
+<Record eofAsDelimiter="true" name="recordName1" previewAttachmentCharset="UTF-8" type="delimited">
+<Field name="fileContent" type="byte"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata0">
+<Record fieldDelimiter="|" name="requestEcho" recordDelimiter="\r\n" type="delimited">
+<Field name="requestBody" type="string"/>
+<Field name="requestClientIpAddress" type="string"/>
+<Field name="requestContentType" type="string"/>
+<Field name="requestEncoding" type="string"/>
+<Field name="requestHeaders" type="string"/>
+<Field name="requestMethod" type="string"/>
+<Field name="requestParameters" type="string"/>
+</Record>
+</Metadata>
+<GraphParameters>
+<GraphParameter name="SOURCE_DIR" value="/mnt/winshare/IT/Permissions"/>
+<GraphParameter name="FILENAME">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	return getRequestPartFilename("input_file") + ".sql";
+}
+]]></attr>
+</GraphParameter>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="sourceFileURL" output="true" type="string"/>
+<Entry input="true" name="sourceFilename" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node guiName="Input" guiX="70" guiY="25" id="RESTJOB_INPUT0" requestFormat="JSON" restJobInput="true" type="RESTJOB_INPUT"/>
+<Node guiName="GetJobInput" guiX="270" guiY="25" id="RequestParametersValidator" restJobInput="true" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+// Transforms input record into output record.
+function integer transform() {
+	if (isEmpty(getRequestParameter("debugging"))) { 
+		raiseError("Missing required request parameter: 'debugging'");
+	}
+	if (isEmpty(getRequestParameter("dbname"))) { 
+		raiseError("Missing required request parameter: 'dbname'");
+	}
+	return ALL;
+}]]></attr>
+</Node>
+<Node guiName="Set input/output file attributes" guiX="270" guiY="75" id="SET_INPUT_OUTPUT_FILE_ATTRIBUTES" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	dictionary.sourceFilename = getRequestPartFilename("input_file");
+	dictionary.sourceFileURL = "${SOURCE_DIR}/" + dictionary.sourceFilename;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+</Phase>
+<Phase number="1">
+<Node fileURL="request:part:input_file" guiName="FlatFileReader" guiX="320" guiY="325" id="FLAT_FILE_READER1" type="FLAT_FILE_READER"/>
+<Node fileURL="dict:sourceFileURL:source" guiName="FlatFileWriter" guiX="670" guiY="325" id="FLAT_FILE_WRITER" type="FLAT_FILE_WRITER"/>
+<Edge fromNode="FLAT_FILE_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (output)" toNode="FLAT_FILE_WRITER:0"/>
+</Phase>
+<Phase number="2">
+<Node disableSSLCertValidation="true" guiName="HTTPConnector" guiX="495" guiY="650" id="HTTPCONNECTOR" requestMethod="GET" type="HTTP_CONNECTOR" url="https://cloveretl-docker.twu.ca:5678/Datahub/permissions">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	map[string,string] requestParameters;
+	
+	requestParameters['filename'] = dictionary.sourceFilename;
+	requestParameters['dbname'] = getRequestParameter('dbname');
+	requestParameters['isdebug'] = getRequestParameter('debugging');
+	$out.0.requestParameters = requestParameters;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node attachment="true" contentType="text/plain" encoding="UTF-8" fileURL="${SOURCE_DIR}/${FILENAME}" guiName="Output" guiX="1095" guiY="25" id="RESTJOB_OUTPUT0" metadataName="true" responseFormat="FILE" restJobOutput="true" topLevelArray="true" type="RESTJOB_OUTPUT"/>
+</Phase>
+</Graph>

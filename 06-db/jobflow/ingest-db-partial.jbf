@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 06 12:41:47 PDT 2025" guiVersion="7.1.0.8" id="1760111500730" licenseCode="CLCDSTWUXX28767030SP" name="00-ingest" nature="jobflow" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/dataobjects.fmt" id="Metadata2"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="100" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT *
+FROM [_meta].[dbo].[_object]
+WHERE _type = 'db'
+AND _status = 'active']]></attr>
+<attr name="guiDescription"><![CDATA[Get active objects list of type db]]></attr>
+</Node>
+<Node guiName="ExecuteJobflow" guiX="570" guiY="275" id="EXECUTE_JOBFLOW" jobURL="${JOBFLOW_DIR}/ingest-db-single.jbf" type="EXECUTE_JOBFLOW">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.type = $in.0.type;
+	$out.1.host = $in.0.host;
+	$out.1.catalog = $in.0.catalog;
+	$out.1.schema = $in.0.schema;
+	$out.1.object = $in.0.object;
+	$out.1.filter = $in.0.filter;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Fail" guiX="870" guiY="425" id="FAIL" type="FAIL"/>
+<Node guiName="Filter" guiX="345" guiY="200" id="FILTER" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.type == "db"
+&& $in.0.status == "active"
+&& !isBlank($in.0.filter)]]></attr>
+<attr name="guiDescription"><![CDATA[Filter out all-or-nothing tables]]></attr>
+</Node>
+<Node guiName="Success" guiX="970" guiY="125" id="SUCCESS" type="SUCCESS"/>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="FILTER:0"/>
+<Edge fromNode="EXECUTE_JOBFLOW:0" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SUCCESS:0"/>
+<Edge fromNode="EXECUTE_JOBFLOW:1" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 0 (in)" outPort="Port 1 (error)" toNode="FAIL:0"/>
+<Edge fromNode="FILTER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="EXECUTE_JOBFLOW:0"/>
+</Phase>
+</Graph>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Thu Dec 11 14:32:41 PST 2025" guiVersion="7.1.0.8" id="1765748644810" licenseCode="CLCDSTWUXX28767030SP" name="00-validate-by-group" showComponentDetails="true">
+<Global>
+<Metadata fileURL="sandbox://Common/meta/TheMetadata.fmt" id="Metadata0"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="STUDENT_CRS_HIST"/>
+<GraphParameter name="filter" value="WHERE YR_CDE = "/>
+<GraphParameter name="groupsql" value="SELECT DISTINCT CONCAT('${filter}', '''', YR_CDE, '''') FROM TmsEPrd.dbo.${object}"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="95" guiY="100" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[${groupsql}]]></attr>
+<attr name="guiDescription"><![CDATA[Generate groups using groupsql]]></attr>
+</Node>
+<Node guiName="ExecuteGraph" guiX="595" guiY="325" id="EXECUTE_GRAPH" jobURL="${GRAPH_DIR}/verify-bronze-table.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.executionLabel = $in.0.TheString;
+	$out.1.host = getParamValue("host");
+	$out.1.catalog = getParamValue("catalog");
+	$out.1.schema = getParamValue("schema");
+	$out.1.object = getParamValue("object");
+	$out.1.filter = $out.0.executionLabel;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Run verify for each group]]></attr>
+<attr name="outputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.TheString = $in.0.TheString + ' - ' + ($in.2.is_matching ? '' : 'not') + 'matching';
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="FastSort" guiX="345" guiY="225" id="FAST_SORT" sortKey="TheString(a)" type="FAST_SORT">
+<attr name="guiDescription"><![CDATA[Sort the groups]]></attr>
+</Node>
+<Node guiName="Trash" guiX="920" guiY="225" id="TRASH" type="TRASH"/>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="FAST_SORT:0"/>
+<Edge fromNode="EXECUTE_GRAPH:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="TRASH:0"/>
+<Edge fromNode="EXECUTE_GRAPH:1" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 1 (in)" outPort="Port 1 (error)" toNode="TRASH:1"/>
+<Edge fromNode="FAST_SORT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="EXECUTE_GRAPH:0"/>
+</Phase>
+</Graph>

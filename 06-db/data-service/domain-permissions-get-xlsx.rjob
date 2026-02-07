@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 20 14:09:30 PDT 2025" guiVersion="7.1.0.8" id="1761015441316" licenseCode="CLCDSTWUXX28767030SP" name="list-dataobjects" nature="restJob" showComponentDetails="true">
+<Global>
+<EndpointSettings>
+<UrlPath>/datahub/permissions/domain</UrlPath>
+<Description>Retrieve the security/permissions settings of your Datahub domain. Will spit out an Excel workbook called domain-permissions.xlsx with 8 tabs: 4 db-specific and 4 server-related settings.&#13;
+&#13;
+Database/domain specific:&#13;
+- Users: db user/login information&#13;
+- Roles: db roles&#13;
+- Memberships: db role memberships&#13;
+- Permissions: more targeted and detailed db permissions&#13;
+&#13;
+Server related:&#13;
+- Logins: all the logins relevant to the Users tab above&#13;
+- ServerPermissions: detailed server/endpoint/availability_group permissions&#13;
+- ServerRoleMemberships: server role memberships&#13;
+- Endpoints: endpoint specific security info&#13;
+</Description>
+<EndpointName>Datahub Domain Permissions</EndpointName>
+<Category>Datahub</Category>
+<RequestMethod name="GET"/>
+</EndpointSettings>
+<RestJobResponseStatus>
+<JobError>
+<reasonPhrase>Job failed</reasonPhrase>
+<statusCode>500</statusCode>
+<ReasonPhrase>Job failed</ReasonPhrase>
+<StatusCode>500</StatusCode>
+</JobError>
+<Success>
+<statusCode>200</statusCode>
+<StatusCode>200</StatusCode>
+</Success>
+<ValidationError>
+<reasonPhrase>Request validation failed</reasonPhrase>
+<statusCode>400</statusCode>
+<ReasonPhrase>Request validation failed</ReasonPhrase>
+<StatusCode>400</StatusCode>
+</ValidationError>
+</RestJobResponseStatus>
+<Metadata fileURL="sandbox://Common/meta/TheMetadata.fmt" id="Metadata1"/>
+<Metadata id="Metadata0">
+<Record fieldDelimiter=";" name="ServerLogin" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="LoginName" size="128" type="string"/>
+<Field name="LoginType" size="16" type="string"/>
+<Field name="PasswordMode" size="16" type="string"/>
+<Field name="PasswordPlain" size="512" type="string"/>
+<Field name="PasswordHash" size="512" type="string"/>
+<Field name="CheckPolicy" size="1" type="boolean"/>
+<Field name="CheckExpiration" size="1" type="boolean"/>
+<Field name="MustChange" size="1" type="boolean"/>
+<Field name="DefaultDatabase" size="128" type="string"/>
+<Field name="DefaultLanguage" size="128" type="string"/>
+<Field name="Disabled" size="1" type="boolean"/>
+<Field name="SID" size="85" type="byte"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="outfile" value="${DATAOUT_DIR}/domain-permissions.xlsx"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="hostname" output="true" type="string"/>
+<Entry input="true" name="dbname" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="220" guiY="375" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT *
+FROM _meta.sec.ServerLogin
+WHERE HostName = 'Datahub'
+AND LoginName != 'cloveretl']]></attr>
+<attr name="guiDescription"><![CDATA[Retrieve logins]]></attr>
+</Node>
+<Node guiName="DataIntersection" guiX="595" guiY="150" id="DATA_INTERSECTION" joinKey="$LoginName=$LoginName" type="DATA_INTERSECTION">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.1.*;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="ExecuteGraph" guiX="845" guiY="100" id="EXECUTE_GRAPH" jobURL="${GRAPH_DIR}/generate-permissions-xlsx.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.hostname = $in.0.HostName;
+	$out.1.dbname = $in.0.DefaultDatabase;
+	
+	dictionary.hostname = $out.1.hostname;
+	dictionary.dbname = $out.1.dbname;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Generate permissions.xlsx]]></attr>
+</Node>
+<Node guiName="GetJobInput" guiX="220" guiY="75" id="GET_JOB_INPUT" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.LoginName = split("${CLOVER_USERNAME}", '@')[0];
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Get clover username]]></attr>
+</Node>
+<Node guiName="Map" guiX="395" guiY="275" id="MAP" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.LoginName = lowerCase(replace($in.0.LoginName, "TRINET\\\\", ""));
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Reformat login name]]></attr>
+</Node>
+<Node guiName="Input" guiX="70" guiY="25" id="RESTJOB_INPUT0" requestFormat="JSON" restJobInput="true" type="RESTJOB_INPUT"/>
+<Node attachment="true" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" fileURL="${outfile}" guiName="Output" guiX="1220" guiY="25" id="RESTJOB_OUTPUT0" metadataName="true" responseFormat="FILE" restJobOutput="true" topLevelArray="true" type="RESTJOB_OUTPUT"/>
+<Node guiName="Trash" guiX="845" guiY="300" id="TRASH" type="TRASH"/>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="MAP:0"/>
+<Edge fromNode="DATA_INTERSECTION:0" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" outPort="Port 0 (only in A)" toNode="TRASH:0"/>
+<Edge fromNode="DATA_INTERSECTION:1" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 1 (in A &amp; B)" toNode="EXECUTE_GRAPH:0"/>
+<Edge fromNode="DATA_INTERSECTION:2" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 1 (in)" outPort="Port 2 (only in B)" toNode="TRASH:1"/>
+<Edge fromNode="EXECUTE_GRAPH:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="MOVE_FILES:0"/>
+<Edge fromNode="GET_JOB_INPUT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (set A)" metadata="Metadata0" outPort="Port 0 (out)" toNode="DATA_INTERSECTION:0"/>
+<Edge fromNode="MAP:0" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 1 (set B)" metadata="Metadata0" outPort="Port 0 (out)" toNode="DATA_INTERSECTION:1"/>
+</Phase>
+<Phase number="5">
+<Node guiName="CopyFiles" guiX="1045" guiY="300" id="COPY_FILES" sourceURL="${META_DIR}/permissions-template.xlsx" targetURL="${outfile}" type="COPY_FILES">
+<attr name="guiDescription"><![CDATA[Copy template to outfile]]></attr>
+</Node>
+</Phase>
+<Phase number="10">
+<Node guiName="MoveFiles" guiX="1045" guiY="100" id="MOVE_FILES" type="MOVE_FILES">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	string hostname = dictionary.hostname;
+	string dbname = dictionary.dbname;
+	
+	$out.0.sourceURL = concat(
+		"${DATAOUT_DIR}/permissions-",
+		hostname,
+		dbname == "all" ? "" : "-" + dbname,
+		".xlsx"
+	);
+	$out.0.targetURL = getParamValue("outfile");
+	$out.0.overwrite = "always";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Move created files to domain-permissions.xlsx]]></attr>
+</Node>
+</Phase>
+</Graph>

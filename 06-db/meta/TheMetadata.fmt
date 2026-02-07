@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Record fieldDelimiter="|" name="TheMetadata" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field auto_filling="ErrText" name="TheString" type="string"/>
+<Field auto_filling="ErrCode" name="TheInteger" type="integer"/>
+</Record>

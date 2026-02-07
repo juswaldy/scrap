@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 20 14:09:30 PDT 2025" guiVersion="7.1.0.8" id="1761148504639" licenseCode="CLCDSTWUXX28767030SP" name="load-ldap-user" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/dataobjects.fmt" id="Metadata2"/>
+<Metadata id="Metadata0">
+<Record fieldDelimiter="\t" name="aduser" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field name="objectGuid" type="string"/>
+<Field name="objectClass" type="string"/>
+<Field name="objectSID" type="string"/>
+<Field name="mail" type="string"/>
+<Field name="displayName" type="string"/>
+<Field name="cn" type="string"/>
+<Field name="givenName" type="string"/>
+<Field name="sn" type="string"/>
+<Field name="description" type="string"/>
+<Field name="distinguishedName" type="string"/>
+<Field name="memberOf" type="string"/>
+<Field name="sAMAccountName" type="string"/>
+<Field name="userPrincipalName" type="string"/>
+<Field name="userAccountControl" type="string"/>
+<Field name="whenCreated" type="string"/>
+<Field name="whenChanged" type="string"/>
+<Field name="lastLogonTimestamp" type="string"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="id" value="98"/>
+<GraphParameter name="host" value="LDAP"/>
+<GraphParameter name="catalog" value="Ldap"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="objectClass" value="top"/>
+<GraphParameter name="object" value="${objectClass}s"/>
+<GraphParameter name="filter" value="objectClass=${objectClass}"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DBExecute" guiX="170" guiY="125" id="DBEXECUTE" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[TRUNCATE TABLE [${catalog}].[${schema}].[${object}]]]></attr>
+<attr name="guiDescription"><![CDATA[Truncate bronze table]]></attr>
+</Node>
+</Phase>
+<Phase number="5">
+<Node batchMode="true" dbConnection="JDBC0" dbTable="[${catalog}].[${schema}].[${object}]" guiName="DatabaseWriter" guiX="745" guiY="275" id="DATABASE_WRITER" type="DB_OUTPUT_TABLE">
+<attr name="guiDescription"><![CDATA[Write to bronze table]]></attr>
+</Node>
+<Node allAttributes="false" guiName="LDAPReader" guiX="245" guiY="275" id="LDAPREADER" ldapUrl="${LDAP_url}" pageSize="200" password="${LDAP_password}" scope="subtree" type="LDAP_READER" user="${LDAP_user}">
+<attr name="filter"><![CDATA[${filter}]]></attr>
+<attr name="guiDescription"><![CDATA[Read top level]]></attr>
+<attr name="base"><![CDATA[dc=twu,dc=ca]]></attr>
+</Node>
+<Node guiName="Map" guiX="495" guiY="375" id="MAP" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Convert objectSID from binary to string.
+function string fn_SIDToString(byte SID) {
+    string result;
+    integer i;
+    integer subAuthorityCount;
+    integer revision;
+    long identifierAuthority;
+    long subAuthority;
+    
+    if (isnull(SID)) return null;
+    
+    result = "";
+    i = 0;
+    
+    // Revision (first byte)
+    revision = byteAt(SID, 0);
+    result = "S-" + num2str(revision);
+    
+    // SubAuthorityCount (second byte)
+    subAuthorityCount = byteAt(SID, 1);
+    
+    // IdentifierAuthority (6 bytes, big endian, bytes 2-7)
+    identifierAuthority = 0L;
+    identifierAuthority = identifierAuthority + (byteAt(SID, 2) * 1099511627776L);  // 256^5
+    identifierAuthority = identifierAuthority + (byteAt(SID, 3) * 4294967296L);     // 256^4
+    identifierAuthority = identifierAuthority + (byteAt(SID, 4) * 16777216L);       // 256^3
+    identifierAuthority = identifierAuthority + (byteAt(SID, 5) * 65536L);          // 256^2
+    identifierAuthority = identifierAuthority + (byteAt(SID, 6) * 256L);            // 256^1
+    identifierAuthority = identifierAuthority + byteAt(SID, 7);                     // 256^0
+    
+    result = result + "-" + num2str(identifierAuthority);
+    
+    // SubAuthorities (4 bytes each, little endian)
+    i = 0;
+    while (i < subAuthorityCount) {
+        // Little endian: least significant byte first
+        subAuthority = 0L;
+        subAuthority = subAuthority + byteAt(SID, 8 + i * 4);
+        subAuthority = subAuthority + (byteAt(SID, 9 + i * 4) * 256L);
+        subAuthority = subAuthority + (byteAt(SID, 10 + i * 4) * 65536L);
+        subAuthority = subAuthority + (byteAt(SID, 11 + i * 4) * 16777216L);
+        
+        result = result + "-" + num2str(subAuthority);
+        i = i + 1;
+    }
+    
+    return result;
+}
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+//	$out.0.objectSID = fn_SIDToString(str2byte($in.0.objectSID, "windows-1252"));
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Try to convert SID to string]]></attr>
+</Node>
+<Edge fromNode="LDAPREADER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="MAP:0"/>
+<Edge fromNode="MAP:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="DATABASE_WRITER:0"/>
+</Phase>
+<Phase number="10">
+<Node guiName="Compare source with bronze" guiX="745" guiY="425" id="COMPARE_SOURCE_WITH_BRONZE1" jobURL="${GRAPH_DIR}/compare-source-with-bronze.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.processboth = "false";
+	$out.1.host = "Datahub";
+	$out.1.catalog = getParamValue("catalog");
+	$out.1.schema = getParamValue("schema");
+	$out.1.object = getParamValue("object");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="outputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.id = str2integer(getParamValue("id"));
+	$out.0.name = "LDAP Top Level";
+	$out.0.filter = getParamValue("filter");
+	$out.0.numrows = $in.2.target_num_rows;
+	$out.0.checksum = $in.2.target_checksum;
+	$out.0.checksum_binary = $in.2.target_checksum_binary;
+	$out.0.datasizemb = $in.2.target_dataspace_mb;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Record ingestion stats" guiX="1045" guiY="425" id="RECORD_INGESTION_STATS" jobURL="${GRAPH_DIR}/record-ingestion-stats.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.id = num2str($in.0.id);
+	$out.1.name = $in.0.name;
+	$out.1.filter = $in.0.filter;
+	$out.1.numrows = num2str($in.0.numrows);
+	$out.1.checksum = num2str($in.0.checksum);
+	$out.1.checksum_binary = num2str($in.0.checksum_binary);
+	$out.1.datasizemb = num2str($in.0.datasizemb);
+	$out.1.status = "completed";
+	$out.1.step = "final";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="COMPARE_SOURCE_WITH_BRONZE1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="RECORD_INGESTION_STATS:0"/>
+</Phase>
+</Graph>

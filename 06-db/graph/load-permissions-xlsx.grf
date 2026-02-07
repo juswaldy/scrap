@@ -1,0 +1,691 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Tue Nov 25 11:20:01 PST 2025" guiVersion="7.1.0.8" id="1764892508597" licenseCode="CLCDSTWUXX28767030SP" name="00-load-sec-schema" showComponentDetails="true">
+<Global>
+<Metadata id="Metadata2">
+<Record fieldDelimiter=";" name="DbPrincipal" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="DbName" size="128" type="string"/>
+<Field name="PrincipalName" size="128" type="string"/>
+<Field name="PrincipalType" size="8" type="string"/>
+<Field name="AuthType" size="16" type="string"/>
+<Field name="LoginName" size="128" type="string"/>
+<Field name="DefaultSchema" size="128" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata3">
+<Record fieldDelimiter=";" name="DbSecurityAssignment" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="DbName" size="128" type="string"/>
+<Field name="AssignmentType" size="16" type="string"/>
+<Field name="RoleName" size="128" type="string"/>
+<Field name="State" size="5" type="string"/>
+<Field name="Scope" size="16" type="string"/>
+<Field name="SchemaName" size="128" type="string"/>
+<Field name="ObjectName" size="128" type="string"/>
+<Field name="PermissionName" size="128" type="string"/>
+<Field name="WithGrantOption" size="1" type="boolean"/>
+<Field name="UserName" size="128" type="string"/>
+</Record>
+</Metadata>
+<Metadata fileURL="sandbox://Common/meta/TheMetadata.fmt" id="Metadata4"/>
+<Metadata id="Metadata0">
+<Record fieldDelimiter=";" name="ServerLogin" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="LoginName" size="128" type="string"/>
+<Field name="LoginType" size="16" type="string"/>
+<Field name="PasswordMode" size="16" type="string"/>
+<Field name="PasswordPlain" size="512" type="string"/>
+<Field name="PasswordHash" size="512" type="string"/>
+<Field name="CheckPolicy" size="1" type="boolean"/>
+<Field name="CheckExpiration" size="1" type="boolean"/>
+<Field name="MustChange" size="1" type="boolean"/>
+<Field name="DefaultDatabase" size="128" type="string"/>
+<Field name="DefaultLanguage" size="128" type="string"/>
+<Field name="Disabled" size="1" type="boolean"/>
+<Field name="SID" size="85" type="byte"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter=";" name="ServerSecurityAssignment" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="HostName" size="128" type="string"/>
+<Field name="LoginName" size="128" type="string"/>
+<Field name="AssignmentType" size="16" type="string"/>
+<Field name="State" size="5" type="string"/>
+<Field name="Scope" size="32" type="string"/>
+<Field name="PermissionName" size="128" type="string"/>
+<Field name="EndpointName" size="128" type="string"/>
+<Field name="AGName" size="128" type="string"/>
+<Field name="WithGrantOption" size="1" type="boolean"/>
+<Field name="ServerRoleName" size="128" type="string"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="hostname" value="Datahub"/>
+<GraphParameter name="dbname" value="Analytics"/>
+<GraphParameter name="infile">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	string hostname = getParamValue("hostname");
+	string dbname = getParamValue("dbname");
+	return concat(
+		"permissions-",
+		hostname,
+		dbname == "all" ? "" : "-" + dbname,
+		".xlsx"
+	);
+}
+]]></attr>
+</GraphParameter>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DBExecute" guiX="545" guiY="100" id="DBEXECUTE1" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[TRUNCATE TABLE _meta.sec.ServerLogin;
+TRUNCATE TABLE _meta.sec.ServerSecurityAssignment;
+TRUNCATE TABLE _meta.sec.DbPrincipal;
+TRUNCATE TABLE _meta.sec.DbSecurityAssignment;]]></attr>
+<attr name="guiDescription"><![CDATA[Clear all tables]]></attr>
+</Node>
+<Node dbConnection="JDBC0" guiName="DBExecute" guiX="695" guiY="350" id="DBEXECUTE2" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[DELETE FROM _meta.sec.DbPrincipal WHERE HostName = '${hostname}' AND DbName = '${dbname}';
+DELETE FROM _meta.sec.DbSecurityAssignment WHERE HostName = '${hostname}' AND DbName = '${dbname}';]]></attr>
+<attr name="guiDescription"><![CDATA[Clear db-specific rows]]></attr>
+</Node>
+<Node dbConnection="JDBC0" guiName="DBExecute" guiX="995" guiY="125" id="DBEXECUTE3" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[TRUNCATE TABLE _meta.sec.ServerLogin;]]></attr>
+<attr name="guiDescription"><![CDATA[First phase: clear login table]]></attr>
+</Node>
+<Node guiName="GetJobInput" guiX="95" guiY="100" id="GET_JOB_INPUT" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.TheString = getParamValue("dbname");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Partition" guiX="320" guiY="100" id="PARTITION" type="PARTITION">
+<attr name="guiDescription"><![CDATA["all" or "logins" or a specific db]]></attr>
+<attr name="partitionSource"><![CDATA[//#CTL2
+// This transformation partitions input records into multiple output ports.
+
+// Returns the number of the output port where the input record will be sent.
+function integer getOutputPort() {
+	integer result;
+	switch($in.0.TheString) {
+		case "all": result = 0; break;
+		case "logins": result = 1; break;
+		default: result = 2;
+	}
+	return result;
+}
+
+// Called during component initialization, partitionCount is the number of output ports.
+// function void init(integer partitionCount) {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources.
+// All resources allocated within this method should be released by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if getOutputPort() throws an exception.
+// function integer getOutputPortOnError(string errorMessage, string stackTrace) {
+// }
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="SimpleCopy" guiX="770" guiY="200" id="SIMPLE_COPY" type="SIMPLE_COPY"/>
+<Node guiName="SimpleCopy" guiX="495" guiY="350" id="SIMPLE_COPY1" type="SIMPLE_COPY"/>
+<Edge fromNode="GET_JOB_INPUT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge22" inPort="Port 0 (in)" metadata="Metadata4" outPort="Port 0 (out)" toNode="PARTITION:0"/>
+<Edge fromNode="PARTITION:0" guiBendpoints="" guiRouter="Manhattan" id="Edge28" inPort="Port 0 (input parameters)" outPort="Port 0 (out)" toNode="DBEXECUTE1:0"/>
+<Edge fromNode="PARTITION:1" guiBendpoints="" guiRouter="Manhattan" id="Edge30" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="SIMPLE_COPY:0"/>
+<Edge fromNode="PARTITION:2" guiBendpoints="" guiRouter="Manhattan" id="Edge31" inPort="Port 0 (in)" outPort="Port 2 (out)" toNode="SIMPLE_COPY1:0"/>
+<Edge fromNode="SIMPLE_COPY:0" guiBendpoints="" guiRouter="Manhattan" id="Edge32" inPort="Port 0 (input parameters)" outPort="Port 0 (out)" toNode="DBEXECUTE3:0"/>
+<Edge fromNode="SIMPLE_COPY:1" guiBendpoints="" guiRouter="Manhattan" id="Edge33" inPort="Port 0 (input parameters)" outPort="Port 1 (out)" toNode="DBEXECUTE4:0"/>
+<Edge fromNode="SIMPLE_COPY1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge17" inPort="Port 0 (input parameters)" outPort="Port 0 (out)" toNode="DBEXECUTE2:0"/>
+<Edge fromNode="SIMPLE_COPY1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge23" inPort="Port 0 (input parameters)" outPort="Port 1 (out)" toNode="DBEXECUTE5:0"/>
+</Phase>
+<Phase number="5">
+<Node dbConnection="JDBC0" dbTable="_meta.sec.ServerLogin" guiName="DatabaseWriter" guiX="795" guiY="650" id="DATABASE_WRITER" type="DB_OUTPUT_TABLE">
+<attr name="guiDescription"><![CDATA[ServerLogin]]></attr>
+</Node>
+<Node guiName="Filter" guiX="570" guiY="650" id="FILTER1" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+"${dbname}" == "all" || "${dbname}" == "logins"]]></attr>
+</Node>
+<Node guiName="Map" guiX="345" guiY="650" id="MAP" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.HostName = getParamValue("hostname");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node fileURL="${DATAIN_DIR}/${infile}" guiName="SpreadsheetDataReader" guiX="95" guiY="650" id="SPREADSHEET_DATA_READER" sheet="Logins" type="SPREADSHEET_READER">
+<attr name="guiDescription"><![CDATA[Logins]]></attr>
+</Node>
+<Edge fromNode="DATABASE_WRITER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" outPort="Port 0 (rejected)" toNode="TRASH:0"/>
+<Edge fromNode="FILTER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge26" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="DATABASE_WRITER:0"/>
+<Edge fromNode="MAP:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="FILTER1:0"/>
+<Edge fromNode="SPREADSHEET_DATA_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (output)" toNode="MAP:0"/>
+</Phase>
+<Phase number="10">
+<Node dbConnection="JDBC0" dbTable="_meta.sec.ServerSecurityAssignment" guiName="DatabaseWriter" guiX="795" guiY="800" id="DATABASE_WRITER1" type="DB_OUTPUT_TABLE">
+<attr name="guiDescription"><![CDATA[ServerSecurityAssignment]]></attr>
+</Node>
+<Node dbConnection="JDBC0" dbTable="_meta.sec.DbPrincipal" guiName="DatabaseWriter" guiX="795" guiY="1100" id="DATABASE_WRITER2" type="DB_OUTPUT_TABLE">
+<attr name="guiDescription"><![CDATA[DbPrincipal]]></attr>
+</Node>
+<Node dbConnection="JDBC0" dbTable="_meta.sec.DbSecurityAssignment" guiName="DatabaseWriter" guiX="795" guiY="1400" id="DATABASE_WRITER3" type="DB_OUTPUT_TABLE">
+<attr name="guiDescription"><![CDATA[DbSecurityAssignment]]></attr>
+</Node>
+<Node guiName="Map" guiX="345" guiY="800" id="MAP1" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.HostName = getParamValue("hostname");
+	$out.0.AssignmentType = "PERMISSION";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Map" guiX="345" guiY="1100" id="MAP2" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.HostName = getParamValue("hostname");
+	$out.0.PrincipalType = "USER";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Map" guiX="345" guiY="950" id="MAP3" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.HostName = getParamValue("hostname");
+	$out.0.AssignmentType = "SERVER_ROLE";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Map" guiX="345" guiY="1250" id="MAP4" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.HostName = getParamValue("hostname");
+	$out.0.PrincipalType = "ROLE";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Map" guiX="345" guiY="1400" id="MAP5" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.HostName = getParamValue("hostname");
+	$out.0.AssignmentType = "ROLE_MEMBERSHIP";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Map" guiX="345" guiY="1550" id="MAP6" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.HostName = getParamValue("hostname");
+	$out.0.AssignmentType = "ROLE_PERMISSION";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="SimpleGather" guiX="570" guiY="875" id="SIMPLE_GATHER" type="SIMPLE_GATHER"/>
+<Node guiName="SimpleGather" guiX="570" guiY="1175" id="SIMPLE_GATHER1" type="SIMPLE_GATHER"/>
+<Node guiName="SimpleGather" guiX="570" guiY="1475" id="SIMPLE_GATHER2" type="SIMPLE_GATHER"/>
+<Node fileURL="${DATAIN_DIR}/${infile}" guiName="SpreadsheetDataReader" guiX="95" guiY="800" id="SPREADSHEET_DATA_READER1" sheet="ServerPermissions" type="SPREADSHEET_READER">
+<attr name="guiDescription"><![CDATA[ServerPermissions]]></attr>
+</Node>
+<Node fileURL="${DATAIN_DIR}/${infile}" guiName="SpreadsheetDataReader" guiX="95" guiY="950" id="SPREADSHEET_DATA_READER2" sheet="ServerRoleMemberships" type="SPREADSHEET_READER">
+<attr name="guiDescription"><![CDATA[ServerRoleMemberships]]></attr>
+</Node>
+<Node fileURL="${DATAIN_DIR}/${infile}" guiName="SpreadsheetDataReader" guiX="95" guiY="1100" id="SPREADSHEET_DATA_READER3" sheet="Users" type="SPREADSHEET_READER">
+<attr name="mapping"><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<mapping>
+    <globalAttributes>
+        <step>1</step>
+        <orientation>VERTICAL</orientation>
+        <writeHeader>true</writeHeader>
+    </globalAttributes>
+    <defaultSkip>1</defaultSkip>
+    <headerGroups>
+        <headerGroup skip="1">
+            <cloverField>HostName</cloverField>
+            <headerRanges>
+                <headerRange begin="A1"/>
+            </headerRanges>
+        </headerGroup>
+        <headerGroup skip="1">
+            <cloverField>DbName</cloverField>
+            <headerRanges>
+                <headerRange begin="B1"/>
+            </headerRanges>
+        </headerGroup>
+        <headerGroup skip="1">
+            <cloverField>PrincipalName</cloverField>
+            <headerRanges>
+                <headerRange begin="C1"/>
+            </headerRanges>
+        </headerGroup>
+        <headerGroup skip="1">
+            <cloverField>AuthType</cloverField>
+            <headerRanges>
+                <headerRange begin="D1"/>
+            </headerRanges>
+        </headerGroup>
+        <headerGroup skip="1">
+            <cloverField>LoginName</cloverField>
+            <headerRanges>
+                <headerRange begin="E1"/>
+            </headerRanges>
+        </headerGroup>
+        <headerGroup skip="1">
+            <cloverField>DefaultSchema</cloverField>
+            <headerRanges>
+                <headerRange begin="F1"/>
+            </headerRanges>
+        </headerGroup>
+    </headerGroups>
+</mapping>
+]]></attr>
+<attr name="guiDescription"><![CDATA[Users]]></attr>
+</Node>
+<Node fileURL="${DATAIN_DIR}/${infile}" guiName="SpreadsheetDataReader" guiX="95" guiY="1250" id="SPREADSHEET_DATA_READER4" sheet="Roles" type="SPREADSHEET_READER">
+<attr name="mapping"><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<mapping>
+    <globalAttributes>
+        <step>1</step>
+        <orientation>VERTICAL</orientation>
+        <writeHeader>true</writeHeader>
+    </globalAttributes>
+    <defaultSkip>1</defaultSkip>
+    <headerGroups>
+        <headerGroup skip="1">
+            <cloverField>HostName</cloverField>
+            <headerRanges>
+                <headerRange begin="A1"/>
+            </headerRanges>
+        </headerGroup>
+        <headerGroup skip="1">
+            <cloverField>DbName</cloverField>
+            <headerRanges>
+                <headerRange begin="B1"/>
+            </headerRanges>
+        </headerGroup>
+        <headerGroup skip="1">
+            <cloverField>PrincipalName</cloverField>
+            <headerRanges>
+                <headerRange begin="C1"/>
+            </headerRanges>
+        </headerGroup>
+    </headerGroups>
+</mapping>
+]]></attr>
+<attr name="guiDescription"><![CDATA[Roles]]></attr>
+</Node>
+<Node fileURL="${DATAIN_DIR}/${infile}" guiName="SpreadsheetDataReader" guiX="95" guiY="1400" id="SPREADSHEET_DATA_READER5" sheet="Memberships" type="SPREADSHEET_READER">
+<attr name="guiDescription"><![CDATA[Membership]]></attr>
+</Node>
+<Node fileURL="${DATAIN_DIR}/${infile}" guiName="SpreadsheetDataReader" guiX="95" guiY="1550" id="SPREADSHEET_DATA_READER6" sheet="Permissions" type="SPREADSHEET_READER">
+<attr name="guiDescription"><![CDATA[Permissions]]></attr>
+</Node>
+<Node guiName="Trash" guiX="1120" guiY="650" id="TRASH" type="TRASH"/>
+<Edge fromNode="DATABASE_WRITER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 1 (in)" outPort="Port 0 (rejected)" toNode="TRASH:1"/>
+<Edge fromNode="DATABASE_WRITER2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge16" inPort="Port 2 (in)" metadata="Metadata2" outPort="Port 0 (rejected)" toNode="TRASH:2"/>
+<Edge fromNode="DATABASE_WRITER3:0" guiBendpoints="" guiRouter="Manhattan" id="Edge21" inPort="Port 3 (in)" outPort="Port 0 (rejected)" toNode="TRASH:3"/>
+<Edge fromNode="MAP1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge14" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:0"/>
+<Edge fromNode="MAP2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="SIMPLE_GATHER1:0"/>
+<Edge fromNode="MAP3:0" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 1 (in)" metadata="Metadata1" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:1"/>
+<Edge fromNode="MAP4:0" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 1 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="SIMPLE_GATHER1:1"/>
+<Edge fromNode="MAP5:0" guiBendpoints="" guiRouter="Manhattan" id="Edge13" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (out)" toNode="SIMPLE_GATHER2:0"/>
+<Edge fromNode="MAP6:0" guiBendpoints="" guiRouter="Manhattan" id="Edge15" inPort="Port 1 (in)" metadata="Metadata3" outPort="Port 0 (out)" toNode="SIMPLE_GATHER2:1"/>
+<Edge fromNode="SIMPLE_GATHER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge18" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="DATABASE_WRITER1:0"/>
+<Edge fromNode="SIMPLE_GATHER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge19" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="DATABASE_WRITER2:0"/>
+<Edge fromNode="SIMPLE_GATHER2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge20" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="DATABASE_WRITER3:0"/>
+<Edge fromNode="SPREADSHEET_DATA_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (output)" toNode="MAP1:0"/>
+<Edge fromNode="SPREADSHEET_DATA_READER2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge12" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (output)" toNode="MAP3:0"/>
+<Edge fromNode="SPREADSHEET_DATA_READER3:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (output)" toNode="MAP2:0"/>
+<Edge fromNode="SPREADSHEET_DATA_READER4:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (output)" toNode="MAP4:0"/>
+<Edge fromNode="SPREADSHEET_DATA_READER5:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (output)" toNode="MAP5:0"/>
+<Edge fromNode="SPREADSHEET_DATA_READER6:0" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (output)" toNode="MAP6:0"/>
+</Phase>
+<Phase number="100">
+<Node dbConnection="JDBC0" guiName="DBExecute" guiX="995" guiY="275" id="DBEXECUTE4" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[-- For each bronze db, insert missing users and roles and assign them to SourceReaderRole (and IntegrationRole for cloveretl)
+WITH bronze AS (
+    SELECT DISTINCT _host, _catalog
+    FROM _meta.dbo._object
+    WHERE _host != 'Datahub' AND _status = 'active'
+),
+current_users AS (
+    SELECT x.*
+    FROM bronze b
+    JOIN _meta.sec.DbPrincipal x ON b._catalog = x.DbName
+    WHERE x.PrincipalType = 'USER'
+),
+future_users AS (
+    SELECT
+        x.HostName,
+        b._catalog AS DbName,
+        x.LoginName AS PrincipalName,
+        'USER' AS PrincipalType,
+        'LOGIN' AS AuthType,
+        x.LoginName,
+        'dbo' AS DefaultSchema
+    FROM bronze b
+    CROSS APPLY _meta.sec.ServerLogin x
+),
+new_users AS (
+    SELECT * FROM future_users
+    EXCEPT
+    SELECT * FROM current_users
+)
+INSERT INTO _meta.sec.DbPrincipal (HostName, DbName, PrincipalName, PrincipalType, AuthType, LoginName, DefaultSchema)
+SELECT * FROM new_users;
+
+WITH bronze AS (
+    SELECT DISTINCT _host, _catalog
+    FROM _meta.dbo._object
+    WHERE _host != 'Datahub' AND _status = 'active'
+),
+current_roles AS (
+    SELECT x.*
+    FROM bronze b
+    JOIN _meta.sec.DbPrincipal x ON b._catalog = x.DbName
+    WHERE x.PrincipalType = 'ROLE'
+),
+bronze_roles AS (
+    SELECT 'db_datareader' AS RoleName
+    UNION
+    SELECT 'db_datawriter' AS RoleName
+    UNION
+    SELECT 'db_ddladmin' AS RoleName
+    UNION
+    SELECT 'IntegrationRole' AS RoleName
+    UNION
+    SELECT 'SourceReaderRole' AS RoleName
+),
+future_roles AS (
+    SELECT
+        'Datahub' AS HostName,
+        b._catalog AS DbName,
+        x.RoleName AS PrincipalName,
+        'ROLE' AS PrincipalType,
+        NULL AS AuthType,
+        NULL AS LoginName,
+        NULL AS DefaultSchema
+    FROM bronze b
+    CROSS APPLY bronze_roles x
+),
+new_roles AS (
+    SELECT * FROM future_roles
+    EXCEPT
+    SELECT * FROM current_roles
+)
+INSERT INTO _meta.sec.DbPrincipal (HostName, DbName, PrincipalName, PrincipalType, AuthType, LoginName, DefaultSchema)
+SELECT * FROM new_roles;
+
+WITH bronze AS (
+    SELECT DISTINCT _host, _catalog
+    FROM _meta.dbo._object
+    WHERE _host != 'Datahub' AND _status = 'active'
+),
+current_memberships AS (
+    SELECT x.HostName, x.DbName, x.AssignmentType, x.RoleName, x.UserName
+    FROM bronze b
+    JOIN _meta.sec.DbSecurityAssignment x ON b._catalog = x.DbName
+    WHERE x.AssignmentType = 'ROLE_MEMBERSHIP'
+    AND x.RoleName IN ('db_datareader', 'db_datawriter', 'db_ddladmin', 'IntegrationRole', 'SourceReaderRole')
+),
+integration_memberships AS (
+    SELECT 'db_datareader' AS RoleName, 'SourceReaderRole' AS UserName
+    UNION
+    SELECT 'db_datareader' AS RoleName, 'IntegrationRole' AS UserName
+    UNION
+    SELECT 'db_datawriter' AS RoleName, 'IntegrationRole' AS UserName
+    UNION
+    SELECT 'db_ddladmin' AS RoleName, 'IntegrationRole' AS UserName
+    UNION
+    SELECT 'IntegrationRole' AS RoleName, 'cloveretl' AS UserName
+),
+future_memberships AS (
+    SELECT
+        x.HostName,
+        b._catalog AS DbName,
+        'ROLE_MEMBERSHIP' AS AssignmentType,
+        'SourceReaderRole' AS RoleName,
+        x.LoginName AS UserName
+    FROM bronze b
+    CROSS APPLY _meta.sec.ServerLogin x
+    WHERE x.LoginName != 'cloveretl'
+    UNION
+    SELECT
+        'Datahub' AS HostName,
+        b._catalog AS DbName,
+        'ROLE_MEMBERSHIP' AS AssignmentType,
+        x.RoleName AS RoleName,
+        x.UserName AS UserName
+    FROM bronze b
+    CROSS APPLY integration_memberships x
+),
+new_memberships AS (
+    SELECT * FROM future_memberships
+    EXCEPT
+    SELECT * FROM current_memberships
+)
+INSERT INTO _meta.sec.DbSecurityAssignment (HostName, DbName, AssignmentType, RoleName, UserName)
+SELECT * FROM new_memberships;]]></attr>
+<attr name="guiDescription"><![CDATA[Last phase: insert missing users, roles and memberships]]></attr>
+</Node>
+<Node dbConnection="JDBC0" guiName="DBExecute" guiX="695" guiY="475" id="DBEXECUTE5" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[INSERT INTO _meta.sec.ServerLogin (HostName, LoginName, LoginType, PasswordMode, PasswordPlain, PasswordHash, CheckPolicy, CheckExpiration, MustChange, DefaultDatabase, DefaultLanguage, Disabled, SID)
+SELECT DISTINCT
+    f.HostName,
+    f.LoginName,
+    'WINDOWS' AS LoginType,
+    NULL AS PasswordMode,
+    NULL AS PasswordPlain,
+    NULL AS PasswordHash,
+    0 AS CheckPolicy,
+    0 AS CheckExpiration,
+    0 AS MustChange,
+    '${dbname}' AS DefaultDatabase,
+    'us_english' AS DefaultLanguage,
+    0 AS Disabled,
+    NULL AS SID
+FROM _meta.sec.DbPrincipal f
+LEFT JOIN _meta.sec.ServerLogin x ON f.LoginName = x.LoginName AND f.HostName = x.HostName
+WHERE f.LoginName != 'cloveretl'
+AND f.DbName = '${dbname}'
+AND x.DefaultDatabase IS NULL;]]></attr>
+<attr name="guiDescription"><![CDATA[Last phase: insert missing logins]]></attr>
+</Node>
+</Phase>
+</Graph>

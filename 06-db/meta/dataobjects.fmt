@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Record fieldDelimiter="|" name="dataobjects" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field name="id" size="10" type="integer"/>
+<Field name="type" size="32" type="string"/>
+<Field name="name" size="256" type="string"/>
+<Field name="host" size="256" type="string"/>
+<Field name="catalog" size="256" type="string"/>
+<Field name="schema" size="256" type="string"/>
+<Field name="object" size="256" type="string"/>
+<Field name="keyfields" size="1024" type="string"/>
+<Field name="filter" type="string"/>
+<Field name="frequency" size="10" type="integer"/>
+<Field name="status" size="8" type="string"/>
+<Field name="description" type="string"/>
+<Field name="created" size="27" type="string"/>
+<Field name="modified" size="27" type="string"/>
+<Field name="verified" size="27" type="string"/>
+<Field name="refreshed" size="27" type="string"/>
+<Field name="numrows" size="19" type="long"/>
+<Field name="checksum" size="19" type="long"/>
+<Field name="checksum_binary" size="19" type="long"/>
+<Field length="10" name="datasizemb" scale="2" size="11" type="decimal"/>
+</Record>

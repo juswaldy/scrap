@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 20 14:09:30 PDT 2025" guiVersion="7.1.0.8" id="1761333055778" licenseCode="CLCDSTWUXX28767030SP" name="copy-api-source-to-bronze" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/dataobjects.fmt" id="Metadata3"/>
+<Metadata id="Metadata2">
+<Record fieldDelimiter="|" name="odata" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field label="@odata.context" name="odata_context" type="string"/>
+<Field name="odata_count" type="string"/>
+<Field name="odata_nextLink" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="|" name="results" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field name="id" type="string"/>
+<Field name="displayName" type="string"/>
+<Field name="mail" type="string"/>
+<Field name="userPrincipalName" type="string"/>
+<Field name="userType" type="string"/>
+<Field name="accountEnabled" type="string"/>
+<Field name="createdDateTime" type="string"/>
+<Field name="employeeId" type="string"/>
+<Field name="onPremisesDistinguishedName" type="string"/>
+<Field name="onPremisesSecurityIdentifier" type="string"/>
+<Field name="onPremisesSyncEnabled" type="string"/>
+<Field name="lastSignInDateTime" type="string"/>
+<Field name="lastSignInRequestId" type="string"/>
+<Field name="lastNonInteractiveSignInDateTime" type="string"/>
+<Field name="lastNonInteractiveSignInRequestId" type="string"/>
+<Field name="lastSuccessfulSignInDateTime" type="string"/>
+<Field name="lastSuccessfulSignInRequestId" type="string"/>
+</Record>
+</Metadata>
+<Connection config="sandbox://Common/conn/Azure-OAuth2.cfg" id="OAuth2Connection0" type="OAUTH2"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="id" value="99"/>
+<GraphParameter name="host" value="Entra"/>
+<GraphParameter name="catalog" value="Entra"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="users"/>
+<GraphParameter name="select" value="employeeId%2CdisplayName%2Cmail%2ConPremisesDistinguishedName%2ConPremisesSecurityIdentifier%2CuserType%2CuserPrincipalName%2Cid%2CcreatedDateTime%2CuserIdentities%2CsignInActivity%2CaccountEnabled%2ConPremisesSyncEnabled"/>
+<GraphParameter name="filter"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="content" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DBExecute" guiX="120" guiY="100" id="DBEXECUTE" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[TRUNCATE TABLE [${catalog}].[${schema}].[${object}]]]></attr>
+<attr name="guiDescription"><![CDATA[Truncate bronze table]]></attr>
+</Node>
+</Phase>
+<Phase number="5">
+<Node dbConnection="JDBC0" dbTable="[${catalog}].[${schema}].[${object}]" guiName="DatabaseWriter" guiX="1270" guiY="600" id="DATABASE_WRITER" type="DB_OUTPUT_TABLE">
+<attr name="guiDescription"><![CDATA[Write to bronze table]]></attr>
+</Node>
+<Node guiName="Get count and next link" guiX="120" guiY="250" id="GET_COUNT_AND_NEXT_LINK" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.odata_count = "1";
+	$out.0.odata_nextLink = "https://graph.microsoft.com/v1.0/${object}/?%24count=true&%24select=${select}";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="HTTPConnector" guiX="895" guiY="700" id="HTTPCONNECTOR1" oAuth2Connection="OAuth2Connection0" type="HTTP_CONNECTOR">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.URL = $in.0.odata_nextLink;
+	
+	if (isBlank($in.0.odata_context)) {
+		map[string,string] requestParameters;
+		requestParameters['$filter'] = "${filter}";
+		$out.0.requestParameters = requestParameters;
+	}
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="headerProperties"><![CDATA[ConsistencyLevel=eventual
+]]></attr>
+<attr name="guiDescription"><![CDATA[Call GET on msgraph]]></attr>
+</Node>
+<Node guiName="JSONExtract" guiX="970" guiY="850" id="JSONEXTRACT1" schema="sandbox://Entra/meta/onlineonly_user_json" sourceUri="port:$0.content:discrete" type="JSON_EXTRACT">
+<attr name="mapping"><![CDATA[<Mappings>
+	<Mapping element="json_object" outPort="1"
+			xmlFields="{}_x0040odata.context;{}_x0040odata.count;{}_x0040odata.nextLink"
+			cloverFields="odata_context;odata_count;odata_nextLink">
+		<Mapping element="value" outPort="0">
+			<Mapping element="signInActivity" useParentRecord="true">
+			</Mapping>
+		</Mapping>
+	</Mapping>
+</Mappings>
+]]></attr>
+</Node>
+<Node guiName="SetJobOutput" guiX="376" guiY="915" id="SET_JOB_OUTPUT" type="SET_JOB_OUTPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.content = $in.0.odata_context;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node delay="1000" guiName="Sleep" guiX="720" guiY="750" id="SLEEP_3_SECONDS" type="SLEEP">
+<attr name="guiDescription"><![CDATA[1000 ms]]></attr>
+</Node>
+<Node guiName="While count and next link is not blank" guiX="495" guiY="450" id="WHILE_COUNT_AND_NEXT_LINK_IS_NOT_BLANK" type="LOOP">
+<attr name="whileCondition"><![CDATA[//#CTL2
+!(isBlank($in.0.odata_count) and isBlank($in.0.odata_nextLink))]]></attr>
+</Node>
+<Edge fromNode="GET_COUNT_AND_NEXT_LINK:0" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 0 (input token)" metadata="Metadata2" outPort="Port 0 (out)" toNode="WHILE_COUNT_AND_NEXT_LINK_IS_NOT_BLANK:0"/>
+<Edge fromNode="HTTPCONNECTOR1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge12" inPort="Port 0 (input)" outPort="Port 0 (out)" toNode="JSONEXTRACT1:0"/>
+<Edge fromNode="JSONEXTRACT1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge14" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (out)" toNode="DATABASE_WRITER:0"/>
+<Edge fromNode="JSONEXTRACT1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge15" inPort="Port 1 (back from loop)" outPort="Port 1 (out)" toNode="WHILE_COUNT_AND_NEXT_LINK_IS_NOT_BLANK:1"/>
+<Edge fromNode="SLEEP_3_SECONDS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="HTTPCONNECTOR1:0"/>
+<Edge fromNode="WHILE_COUNT_AND_NEXT_LINK_IS_NOT_BLANK:0" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" outPort="Port 0 (end of loop)" toNode="SET_JOB_OUTPUT:0"/>
+<Edge fromNode="WHILE_COUNT_AND_NEXT_LINK_IS_NOT_BLANK:1" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 0 (in)" outPort="Port 1 (continue loop)" toNode="SLEEP_3_SECONDS:0"/>
+</Phase>
+<Phase number="10">
+<Node guiName="Compare source with bronze" guiX="870" guiY="1100" id="COMPARE_SOURCE_WITH_BRONZE1" jobURL="${GRAPH_DIR}/compare-source-with-bronze.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.processboth = "false";
+	$out.1.host = "Datahub";
+	$out.1.catalog = getParamValue("catalog");
+	$out.1.schema = getParamValue("schema");
+	$out.1.object = getParamValue("object");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="outputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.id = str2integer(getParamValue("id"));
+	$out.0.name = "Entra Users";
+	$out.0.filter = getParamValue("filter");
+	$out.0.numrows = $in.2.target_num_rows;
+	$out.0.checksum = $in.2.target_checksum;
+	$out.0.checksum_binary = $in.2.target_checksum_binary;
+	$out.0.datasizemb = $in.2.target_dataspace_mb;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Record ingestion stats" guiX="1170" guiY="1100" id="RECORD_INGESTION_STATS" jobURL="${GRAPH_DIR}/record-ingestion-stats.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.id = num2str($in.0.id);
+	$out.1.name = $in.0.name;
+	$out.1.filter = $in.0.filter;
+	$out.1.numrows = num2str($in.0.numrows);
+	$out.1.checksum = num2str($in.0.checksum);
+	$out.1.checksum_binary = num2str($in.0.checksum_binary);
+	$out.1.datasizemb = num2str($in.0.datasizemb);
+	$out.1.status = "completed";
+	$out.1.step = "final";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="COMPARE_SOURCE_WITH_BRONZE1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (out)" toNode="RECORD_INGESTION_STATS:0"/>
+</Phase>
+</Graph>

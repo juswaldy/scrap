@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Mar 31 19:40:51 PDT 2025" guiVersion="7.1.0.8" id="1744249126279" licenseCode="CLCDSTWUXX28767030SP" name="eda" nature="restJob" showComponentDetails="true">
+<Global>
+<EndpointSettings>
+<UrlPath>/datahub/objects</UrlPath>
+<Description>Upload a dataobjects.xlsx to update the configs for the objects handled by Datahub.</Description>
+<EndpointName>datahub-objects-update-table</EndpointName>
+<Category>Datahub</Category>
+<RequestMethod name="PUT"/>
+<RequestParameter id="RestJobParameter2" location="form_data" name="input_file" required="true" type="binary_file"/>
+</EndpointSettings>
+<RestJobResponseStatus>
+<JobError>
+<reasonPhrase>Job failed</reasonPhrase>
+<statusCode>500</statusCode>
+<ReasonPhrase>Job failed</ReasonPhrase>
+<StatusCode>500</StatusCode>
+</JobError>
+<Success>
+<statusCode>200</statusCode>
+<StatusCode>200</StatusCode>
+</Success>
+<ValidationError>
+<reasonPhrase>Request validation failed</reasonPhrase>
+<statusCode>400</statusCode>
+<ReasonPhrase>Request validation failed</ReasonPhrase>
+<StatusCode>400</StatusCode>
+</ValidationError>
+</RestJobResponseStatus>
+<Metadata fileURL="${META_DIR}/dataobjects.fmt" id="Metadata2"/>
+<Metadata id="Metadata1">
+<Record eofAsDelimiter="true" name="recordName1" previewAttachmentCharset="UTF-8" type="delimited">
+<Field name="fileContent" type="byte"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata0">
+<Record fieldDelimiter="|" name="requestEcho" recordDelimiter="\r\n" type="delimited">
+<Field name="requestBody" type="string"/>
+<Field name="requestClientIpAddress" type="string"/>
+<Field name="requestContentType" type="string"/>
+<Field name="requestEncoding" type="string"/>
+<Field name="requestHeaders" type="string"/>
+<Field name="requestMethod" type="string"/>
+<Field name="requestParameters" type="string"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="file_url" output="true" type="string"/>
+<Entry input="true" name="rule_name" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node guiName="Input" guiX="70" guiY="25" id="RESTJOB_INPUT0" requestFormat="JSON" restJobInput="true" type="RESTJOB_INPUT"/>
+<Node guiName="Set input/output file attributes" guiX="270" guiY="75" id="SET_INPUT_OUTPUT_FILE_ATTRIBUTES" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	dictionary.rule_name = getRequestParameter("rule_name");
+	dictionary.file_url = "${META_DIR}/dataobjects.xlsx";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+</Phase>
+<Phase number="5">
+<Node fileURL="request:part:input_file" guiName="FlatFileReader" guiX="520" guiY="75" id="FLAT_FILE_READER1" type="FLAT_FILE_READER"/>
+<Node fileURL="dict:file_url:source" guiName="FlatFileWriter" guiX="945" guiY="75" id="FLAT_FILE_WRITER" type="FLAT_FILE_WRITER"/>
+<Edge fromNode="FLAT_FILE_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (output)" toNode="FLAT_FILE_WRITER:0"/>
+</Phase>
+<Phase number="10">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="270" guiY="250" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[SELECT * FROM [_meta].[dbo].[_object]]]></attr>
+<attr name="guiDescription"><![CDATA[Read list from db]]></attr>
+</Node>
+<Node dbConnection="JDBC0" guiName="DatabaseWriter" guiX="970" guiY="550" id="DATABASE_WRITER" type="DB_OUTPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[INSERT INTO _meta.dbo._object
+(
+    _type,
+    _name,
+    _host,
+    _catalog,
+    _schema,
+    _object,
+    _keyfields,
+    _filter,
+    _frequency,
+    _status,
+    _description,
+    _created,
+    _modified,
+    _verified,
+    _refreshed,
+    _numrows,
+    _checksum,
+    _checksum_binary,
+    _datasizemb
+)
+VALUES
+(
+    $type,
+    $name,
+    $host,
+    $catalog,
+    $schema,
+    $object,
+    $keyfields,
+    $filter,
+    $frequency,
+    $status,
+    $description,
+    $created,
+    $modified,
+    $verified,
+    $refreshed,
+    $numrows,
+    $checksum,
+    $checksum_binary,
+    $datasizemb
+);]]></attr>
+<attr name="guiDescription"><![CDATA[Insert new entries]]></attr>
+</Node>
+<Node dbConnection="JDBC0" guiName="DatabaseWriter" guiX="1020" guiY="425" id="DATABASE_WRITER1" type="DB_OUTPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[UPDATE [_meta].[dbo].[_object] SET
+    _keyfields = $keyfields,
+    _filter = $filter,
+    _frequency = $frequency,
+    _status = $status,
+    _description = $description,
+	_modified = $modified
+WHERE _name = $name
+AND _host = $host
+AND _catalog = $catalog
+AND _schema = $schema
+AND _object = $object]]></attr>
+<attr name="guiDescription"><![CDATA[Update existing entries]]></attr>
+</Node>
+<Node guiName="DataIntersection" guiX="720" guiY="400" id="DATA_INTERSECTION" joinKey="$type=$type;$name=$name;$host=$host;$catalog=$catalog;$schema=$schema;$object=$object" type="DATA_INTERSECTION">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.keyfields = $in.1.keyfields;
+	$out.0.filter = $in.1.filter;
+	$out.0.frequency = $in.1.frequency;
+	$out.0.status = $in.1.status;
+	$out.0.description = $in.1.description;
+	$out.0.modified = $in.1.modified;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="ExtSort" guiX="495" guiY="425" id="EXT_SORT" sortKey="type(a);name(a);host(a);catalog(a);schema(a);object(a);id(a)" type="EXT_SORT"/>
+<Node guiName="ExtSort" guiX="495" guiY="250" id="EXT_SORT1" sortKey="type(a);name(a);host(a);catalog(a);schema(a);object(a);id(a)" type="EXT_SORT"/>
+<Node fileURL="${META_DIR}/dataobjects.xlsx" guiName="SpreadsheetDataReader" guiX="270" guiY="425" id="SPREADSHEET_DATA_READER" sheet="objects" type="SPREADSHEET_READER"/>
+<Node guiName="Trash" guiX="970" guiY="300" id="TRASH" type="TRASH">
+<attr name="guiDescription"><![CDATA[Do nothing]]></attr>
+</Node>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="EXT_SORT1:0"/>
+<Edge fromNode="DATA_INTERSECTION:0" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" outPort="Port 0 (only in A)" toNode="TRASH:0"/>
+<Edge fromNode="DATA_INTERSECTION:1" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 1 (in A &amp; B)" toNode="DATABASE_WRITER1:0"/>
+<Edge fromNode="DATA_INTERSECTION:2" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" outPort="Port 2 (only in B)" toNode="DATABASE_WRITER:0"/>
+<Edge fromNode="EXT_SORT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 1 (set B)" outPort="Port 0 (out)" toNode="DATA_INTERSECTION:1"/>
+<Edge fromNode="EXT_SORT1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 0 (set A)" outPort="Port 0 (out)" toNode="DATA_INTERSECTION:0"/>
+<Edge fromNode="SPREADSHEET_DATA_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (output)" toNode="EXT_SORT:0"/>
+</Phase>
+<Phase number="15">
+<Node Custom_Attribute_Example="${PARAM_NAME}" guiName="Example Request Echo" guiX="1145" guiY="50" id="GET_JOB_INPUT0" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[function integer transform() {
+
+	//  Example CTL code shows how to access HTTP request/response.
+	//  Code bellow processes request using getRequest... CTL functions.
+	//  Similar function set exists for processing response (eg. setResponseBody(),
+	//  setResponseStatus(), etc.)
+
+	$out.0.requestClientIpAddress = getRequestClientIPAddress();
+	$out.0.requestContentType = getRequestContentType();
+	$out.0.requestEncoding = getRequestEncoding();
+ 	$out.0.requestMethod = getRequestMethod();
+	$out.0.requestHeaders = join(", ", getRequestHeaders());
+	$out.0.requestParameters = join(", ", getRequestParameters());
+	//$out.0.requestBody = getRequestBody(); // Can not be used with form parameters
+	//$out.0.id = getRequestParameter("id");  // Get value of REST Job Input parameter 'id'
+
+   //  It is also possible to use parameters and payloads as a component attribute values.
+   //  Use ${PARAM_NAME} in component attribute editor to get value of input parameter.
+   //  For reading payload as stream, use request:body as a URL for reader component.
+	return ALL;
+}]]></attr>
+<attr name="guiDescription"><![CDATA[Replace this example component]]></attr>
+</Node>
+<Node attachment="true" contentType="text/csv" encoding="UTF-8" guiName="Output" guiX="1345" guiY="25" id="RESTJOB_OUTPUT0" metadataName="true" responseFormat="JSON" restJobOutput="true" topLevelArray="true" type="RESTJOB_OUTPUT"/>
+<Edge fromNode="GET_JOB_INPUT0:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="RESTJOB_OUTPUT0:0"/>
+</Phase>
+</Graph>

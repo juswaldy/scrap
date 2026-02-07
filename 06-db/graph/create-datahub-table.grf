@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Fri Oct 03 14:07:26 PDT 2025" guiVersion="7.1.0.8" id="1759526289477" licenseCode="CLCDSTWUXX28767030SP" name="00-readytt" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/TheMetadata.fmt" id="Metadata0"/>
+<Connection dbConfig="sandbox://Common/conn/${host}.cfg" id="JDBC0" type="JDBC"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC1" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="ACCT_CMP_3_DEF"/>
+<GraphParameter name="area" value="Backup"/>
+<GraphParameter name="ansi_padding_spec"/>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="tablename" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="395" guiY="150" id="DBEXECUTE2" type="DB_EXECUTE" url="port:$0.TheString:stream">
+<attr name="guiDescription"><![CDATA[Execute create schema script]]></attr>
+</Node>
+<Node guiName="GetJobInput" guiX="120" guiY="125" id="GET_JOB_INPUT" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	string area = getParamValue("area");
+	string catalog = area == "Backup" ? "IT" : "${catalog}";
+	string schema = area == "Staging" ? "Staging" : area == "Backup" ? "Backup" : "${schema}";
+	$out.0.TheString = "USE [" + catalog + """]
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = '""" + schema + """')
+    EXEC('CREATE SCHEMA [""" + schema + """] AUTHORIZATION IntegrationRole')
+""";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+<attr name="guiDescription"><![CDATA[Prepare create schema script]]></attr>
+</Node>
+<Edge fromNode="DBEXECUTE2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" outPort="Port 0 (procedure output)" toNode="TRASH:0"/>
+<Edge fromNode="GET_JOB_INPUT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (input parameters)" metadata="Metadata0" outPort="Port 0 (out)" toNode="DBEXECUTE2:0"/>
+</Phase>
+<Phase number="5">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="145" guiY="425" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[DECLARE @db NVARCHAR(512) = '${catalog}'
+DECLARE @schema NVARCHAR(512) = '${schema}'
+DECLARE @table NVARCHAR(512) = '${object}'
+DECLARE @object_name SYSNAME
+DECLARE @object_id INT
+DECLARE @object_type VARCHAR(2)
+DECLARE @backup_timestamp NVARCHAR(32) = FORMAT(CURRENT_TIMESTAMP, 'yyyyMMdd-HHmmss')
+DECLARE @source_object NVARCHAR(512) = QUOTENAME(@db) + '.' + QUOTENAME(@schema) + '.' + QUOTENAME(@table)
+DECLARE @target_object NVARCHAR(512) = CASE
+    WHEN '${area}' = 'Staging' THEN QUOTENAME(@db) + '.' + QUOTENAME('Staging') + '.' + QUOTENAME(@schema + '.' + @table)
+    WHEN '${area}' = 'Backup' THEN QUOTENAME('IT') + '.' + QUOTENAME('Backup') + '.' + QUOTENAME(@db + '.' + @schema + '.' + @table + '-' + @backup_timestamp)
+    ELSE @source_object
+    END
+DECLARE @SQL NVARCHAR(MAX)
+
+SELECT @object_id = OBJECT_ID(@source_object)
+SELECT @object_type = type FROM sys.objects WHERE object_id = @object_id
+SELECT @object_name = '[' + OBJECT_SCHEMA_NAME(@object_id) + '].[' + OBJECT_NAME(@object_id) + ']'
+
+SELECT @SQL = 'IF OBJECT_ID(''' + @target_object + ''') IS NOT NULL ' + CHAR(13) +
+    'DROP TABLE ' + @target_object + ';' + CHAR(13) +
+	'${ansi_padding_spec}' + CHAR(13) +
+    'CREATE TABLE ' + @target_object + CHAR(13) + '(' + CHAR(13) + 
+    STUFF((
+        SELECT CHAR(13) + '    [' + c.name + '] ' +
+        CASE WHEN c.is_computed = 1
+        THEN 'AS ' + OBJECT_DEFINITION(c.[object_id], c.column_id)
+        ELSE
+            CASE WHEN c.system_type_id != c.user_type_id
+            THEN '[' + SCHEMA_NAME(tp.[schema_id]) + '].[' + tp.name + ']'
+            ELSE
+                CASE
+                WHEN tp.name = 'timestamp' THEN '[VARBINARY](8)'
+                --WHEN c.name = 'APPID' THEN '[BIGINT]' -- JJJ How can we take care of APPID == -2147483648??
+                ELSE '[' + UPPER(tp.name) + ']'
+                END
+            END +
+            CASE
+            WHEN tp.name IN ('varchar', 'char', 'varbinary', 'binary', 'text')
+            THEN '(' + CASE WHEN c.max_length = -1 THEN 'MAX' ELSE CAST(c.max_length AS VARCHAR(5)) END + ')'
+            WHEN tp.name IN ('nvarchar', 'nchar', 'ntext')
+            THEN '(' + CASE WHEN c.max_length = -1 THEN 'MAX' ELSE CAST(c.max_length / 2 AS VARCHAR(5)) END + ')'
+            WHEN tp.name IN ('datetime2', 'time2', 'datetimeoffset')
+            THEN '(' + CAST(c.scale AS VARCHAR(5)) + ')'
+            WHEN tp.name IN ('decimal', 'numeric')
+            THEN '(' + CAST(c.[precision] AS VARCHAR(5)) + ',' + CAST(c.scale AS VARCHAR(5)) + ')'
+            ELSE ''
+            END +
+            CASE WHEN c.collation_name IS NOT NULL THEN ' COLLATE ' + c.collation_name ELSE '' END +
+            CASE WHEN c.is_nullable = 1 THEN ' NULL' ELSE ' NOT NULL' END +
+            CASE WHEN dc.[definition] IS NOT NULL THEN ' DEFAULT ' +
+                CASE
+                WHEN dc.[definition] LIKE '%NEXT VALUE FOR%' THEN '((-1))'
+                ELSE dc.[definition]
+                END
+            ELSE ''
+            END
+        END + ','
+        FROM sys.columns c WITH(NOLOCK)
+        JOIN sys.types tp WITH(NOLOCK) ON c.user_type_id = tp.user_type_id
+        LEFT JOIN sys.default_constraints dc WITH(NOLOCK) ON c.default_object_id != 0 AND c.[object_id] = dc.parent_object_id AND c.column_id = dc.parent_column_id
+        WHERE c.[object_id] = @object_id
+        ORDER BY c.column_id
+        FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, ' ')
+    + ISNULL((SELECT CHAR(13) + '    CONSTRAINT [' + i.name + CASE WHEN '${area}' = 'Backup' THEN '-' + @backup_timestamp ELSE '' END + '] PRIMARY KEY ' +
+        CASE WHEN i.index_id = 1 THEN 'CLUSTERED' ELSE 'NONCLUSTERED' END +
+        ' (' + (
+            SELECT STUFF((
+                SELECT ', [' + COL_NAME(ic.[object_id], ic.column_id) + ']' +
+                CASE WHEN ic.is_descending_key = 1 THEN ' DESC' ELSE ' ASC' END
+                FROM sys.index_columns ic WITH(NOLOCK)
+                WHERE i.[object_id] = ic.[object_id] AND i.index_id = ic.index_id
+                FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '')
+            ) + ')'
+        FROM sys.indexes i WITH(NOLOCK)
+        WHERE i.[object_id] = @object_id AND i.is_primary_key = 1), '') + CHAR(13) + ');'
+
+SELECT @SQL
+]]></attr>
+<attr name="guiDescription"><![CDATA[Generate drop-and-create script]]></attr>
+</Node>
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="395" guiY="475" id="DBEXECUTE" type="DB_EXECUTE" url="port:$0.TheString:stream">
+<attr name="guiDescription"><![CDATA[Execute drop-and-create script]]></attr>
+</Node>
+<Node guiName="Filter" guiX="870" guiY="550" id="FILTER" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.statement.startsWith("CREATE TABLE")]]></attr>
+</Node>
+<Node guiName="SetJobOutput" guiX="1095" guiY="550" id="SET_JOB_OUTPUT" type="SET_JOB_OUTPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.tablename = $in.0.statement.split('\[')[3].split('\]')[0];
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="SimpleCopy" guiX="670" guiY="400" id="SIMPLE_COPY" type="SIMPLE_COPY"/>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (input parameters)" metadata="Metadata0" outPort="Port 0 (out)" toNode="DBEXECUTE:0"/>
+<Edge fromNode="DBEXECUTE:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" outPort="Port 0 (procedure output)" toNode="SIMPLE_COPY:0"/>
+<Edge fromNode="FILTER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="SET_JOB_OUTPUT:0"/>
+<Edge fromNode="SIMPLE_COPY:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 1 (in)" outPort="Port 0 (out)" toNode="TRASH:1"/>
+<Edge fromNode="SIMPLE_COPY:1" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="FILTER:0"/>
+</Phase>
+<Phase number="10">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="170" guiY="775" id="DATABASE_READER1" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[IF ('${area}' NOT IN ('Staging', 'Backup'))
+BEGIN
+DECLARE @db NVARCHAR(512) = '${catalog}'
+DECLARE @schema NVARCHAR(512) = '${schema}'
+DECLARE @table NVARCHAR(512) = '${object}'
+SELECT 
+    'CREATE ' + 
+    CASE WHEN I.is_unique = 1 THEN 'UNIQUE ' ELSE '' END +
+    I.type_desc COLLATE DATABASE_DEFAULT + ' INDEX [' +
+    I.name + '] ON [' + @db + '].[' + @schema + '].[' + @table + '] (' +
+    KeyColumns + ')' +
+    ISNULL(' INCLUDE (' + IncludedColumns + ')', '') +
+    ISNULL(' WHERE ' + I.filter_definition, '') + 
+    ' WITH (' +
+    CASE WHEN I.is_padded = 1 THEN 'PAD_INDEX = ON' ELSE 'PAD_INDEX = OFF' END + ', ' +
+    'FILLFACTOR = ' + CAST(CASE WHEN I.fill_factor = 0 THEN 100 ELSE I.fill_factor END AS VARCHAR(3)) + ', ' +
+    'SORT_IN_TEMPDB = OFF, ' +
+    CASE WHEN I.ignore_dup_key = 1 THEN 'IGNORE_DUP_KEY = ON' ELSE 'IGNORE_DUP_KEY = OFF' END + ', ' +
+    CASE WHEN ST.no_recompute = 0 THEN 'STATISTICS_NORECOMPUTE = OFF' ELSE 'STATISTICS_NORECOMPUTE = ON' END + ', ' +
+    'ONLINE = OFF, ' +
+    CASE WHEN I.allow_row_locks = 1 THEN 'ALLOW_ROW_LOCKS = ON' ELSE 'ALLOW_ROW_LOCKS = OFF' END + ', ' +
+    CASE WHEN I.allow_page_locks = 1 THEN 'ALLOW_PAGE_LOCKS = ON' ELSE 'ALLOW_PAGE_LOCKS = OFF' END + 
+    ') ON [' + DS.name + '];' + CHAR(13) AS [CreateIndexScript]
+FROM sys.indexes I
+JOIN sys.tables T ON T.object_id = I.object_id
+JOIN sys.stats ST ON ST.object_id = I.object_id AND ST.stats_id = I.index_id
+JOIN sys.data_spaces DS ON I.data_space_id = DS.data_space_id
+JOIN (
+    SELECT 
+        IC2.object_id, 
+        IC2.index_id,
+        STUFF((
+            SELECT ', [' + C.name + ']' + 
+                   CASE WHEN MAX(CONVERT(INT, IC1.is_descending_key)) = 1 
+                        THEN ' DESC' 
+                        ELSE ' ASC' 
+                   END
+            FROM sys.index_columns IC1
+            JOIN sys.columns C ON C.object_id = IC1.object_id 
+                              AND C.column_id = IC1.column_id 
+                              AND IC1.is_included_column = 0
+            WHERE IC1.object_id = IC2.object_id 
+              AND IC1.index_id = IC2.index_id
+            GROUP BY IC1.object_id, C.name, IC1.index_id
+            ORDER BY MAX(IC1.key_ordinal)
+            FOR XML PATH('')
+        ), 1, 2, '') AS KeyColumns
+    FROM sys.index_columns IC2
+    WHERE IC2.object_id = OBJECT_ID(@schema + '.' + @table)
+    GROUP BY IC2.object_id, IC2.index_id
+) tmp4 ON I.object_id = tmp4.object_id AND I.index_id = tmp4.index_id
+LEFT JOIN (
+    SELECT 
+        IC2.object_id, 
+        IC2.index_id,
+        STUFF((
+            SELECT ', [' + C.name + ']'
+            FROM sys.index_columns IC1
+            JOIN sys.columns C ON C.object_id = IC1.object_id 
+                              AND C.column_id = IC1.column_id 
+                              AND IC1.is_included_column = 1
+            WHERE IC1.object_id = IC2.object_id 
+              AND IC1.index_id = IC2.index_id
+            ORDER BY C.name
+            FOR XML PATH('')
+        ), 1, 2, '') AS IncludedColumns
+    FROM sys.index_columns IC2
+    WHERE IC2.object_id = OBJECT_ID(@schema + '.' + @table)
+    GROUP BY IC2.object_id, IC2.index_id
+) tmp5 ON I.object_id = tmp5.object_id AND I.index_id = tmp5.index_id
+WHERE T.name = @table
+  AND SCHEMA_NAME(T.schema_id) = @schema
+  AND I.type_desc IN ('CLUSTERED', 'NONCLUSTERED')
+  AND I.is_primary_key = 0  -- Exclude primary key (usually handled separately)
+  AND I.is_unique_constraint = 0  -- Exclude unique constraints
+ORDER BY I.name
+END
+ELSE SELECT 'SELECT 1']]></attr>
+<attr name="guiDescription"><![CDATA[Generate bronze index scripts. Skip if staging]]></attr>
+</Node>
+<Node dbConnection="JDBC1" guiName="DBExecute" guiX="595" guiY="775" id="DBEXECUTE1" type="DB_EXECUTE" url="port:$0.TheString:stream">
+<attr name="guiDescription"><![CDATA[Execute index scripts]]></attr>
+</Node>
+<Node guiName="Trash" guiX="1095" guiY="300" id="TRASH" type="TRASH"/>
+<Edge fromNode="DATABASE_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (input parameters)" metadata="Metadata0" outPort="Port 0 (out)" toNode="DBEXECUTE1:0"/>
+<Edge fromNode="DBEXECUTE1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 2 (in)" metadata="Metadata0" outPort="Port 0 (procedure output)" toNode="TRASH:2"/>
+</Phase>
+</Graph>

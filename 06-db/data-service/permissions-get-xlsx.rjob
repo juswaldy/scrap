@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 20 14:09:30 PDT 2025" guiVersion="7.1.0.8" id="1761015441316" licenseCode="CLCDSTWUXX28767030SP" name="list-dataobjects" nature="restJob" showComponentDetails="true">
+<Global>
+<EndpointSettings>
+<UrlPath>/datahub/permissions</UrlPath>
+<Description>Retrieve the security/permissions settings of Datahub. Will spit out an Excel workbook called permissions-&lt;hostname&gt;-&lt;dbname&gt;.xlsx with 8 tabs: 4 db-specific and 4 server-related settings.&#13;
+&#13;
+Database specific:&#13;
+- Users: db user/login information&#13;
+- Roles: db roles&#13;
+- Memberships: db role memberships&#13;
+- Permissions: more targeted and detailed db permissions&#13;
+&#13;
+Server related:&#13;
+- Logins: all the logins relevant to the Users tab above&#13;
+- ServerPermissions: detailed server/endpoint/availability_group permissions&#13;
+- ServerRoleMemberships: server role memberships&#13;
+- Endpoints: endpoint specific security info&#13;
+</Description>
+<EndpointName>datahub-permissions-get-xlsx</EndpointName>
+<Category>Datahub</Category>
+<RequestMethod name="GET"/>
+<RequestParameter description="Server name" id="RestJobParameter1" location="query" name="hostname" required="true" type="string"/>
+<RequestParameter description="Database name" id="RestJobParameter2" location="query" name="dbname" required="true" type="string"/>
+</EndpointSettings>
+<RestJobResponseStatus>
+<JobError>
+<reasonPhrase>Job failed</reasonPhrase>
+<statusCode>500</statusCode>
+<ReasonPhrase>Job failed</ReasonPhrase>
+<StatusCode>500</StatusCode>
+</JobError>
+<Success>
+<statusCode>200</statusCode>
+<StatusCode>200</StatusCode>
+</Success>
+<ValidationError>
+<reasonPhrase>Request validation failed</reasonPhrase>
+<statusCode>400</statusCode>
+<ReasonPhrase>Request validation failed</ReasonPhrase>
+<StatusCode>400</StatusCode>
+</ValidationError>
+</RestJobResponseStatus>
+<GraphParameters>
+<GraphParameter name="outfile">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	string hostname = getRequestParameter("hostname");
+	string dbname = getRequestParameter("dbname");
+	return concat(
+		"permissions-",
+		hostname,
+		dbname == "all" ? "" : "-" + dbname,
+		".xlsx"
+	);
+}
+]]></attr>
+</GraphParameter>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node guiName="ExecuteGraph" guiX="445" guiY="250" id="EXECUTE_GRAPH" jobURL="${GRAPH_DIR}/generate-permissions-xlsx.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.hostname = getRequestParameter("hostname");
+	$out.1.dbname = getRequestParameter("dbname");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Input" guiX="70" guiY="25" id="RESTJOB_INPUT0" requestFormat="JSON" restJobInput="true" type="RESTJOB_INPUT"/>
+<Node attachment="true" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" fileURL="${DATAOUT_DIR}/${outfile}" guiName="Output" guiX="895" guiY="25" id="RESTJOB_OUTPUT0" metadataName="true" responseFormat="FILE" restJobOutput="true" topLevelArray="true" type="RESTJOB_OUTPUT"/>
+<Node guiName="GetJobInput" guiX="270" guiY="25" id="RequestParametersValidator" restJobInput="true" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+// Transforms input record into output record.
+function integer transform() {
+	if (isEmpty(getRequestParameter("hostname"))) { 
+		raiseError("Missing required request parameter: 'hostname'");
+	}
+	if (isEmpty(getRequestParameter("dbname"))) { 
+		raiseError("Missing required request parameter: 'dbname'");
+	}
+	return ALL;
+}]]></attr>
+</Node>
+</Phase>
+</Graph>

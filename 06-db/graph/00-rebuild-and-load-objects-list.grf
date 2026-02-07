@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Mon Oct 20 14:09:30 PDT 2025" guiVersion="7.1.0.8" id="1761054196603" licenseCode="CLCDSTWUXX28767030SP" name="00-new-graph" showComponentDetails="true">
+<Global>
+<Metadata id="Metadata2">
+<Record fieldDelimiter="|" name="dataobjects" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field label="id" name="id" type="long"/>
+<Field label="type" name="type" type="string"/>
+<Field label="name" name="name" type="string"/>
+<Field label="host" name="host" type="string"/>
+<Field label="catalog" name="catalog" type="string"/>
+<Field label="schema" name="schema" type="string"/>
+<Field label="object" name="object" type="string"/>
+<Field label="keyfields" name="keyfields" type="string"/>
+<Field name="filter" type="string"/>
+<Field label="description" name="description" type="string"/>
+<Field format="excel:yyyy\-mm\-dd\ hh:mm:ss" label="created" name="created" type="date"/>
+<Field format="excel:yyyy\-mm\-dd\ hh:mm:ss" label="lastmodified" name="lastmodified" type="date"/>
+<Field label="lastrefreshed" name="lastrefreshed" type="string"/>
+<Field label="numrows" name="rowcount" type="string"/>
+<Field label="datasize" name="datasize" type="string"/>
+<Field name="checksum" type="string"/>
+<Field name="checksum_binary" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="|" name="dataobjects_noidentity" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field label="type" name="type" type="string"/>
+<Field label="name" name="name" type="string"/>
+<Field label="host" name="host" type="string"/>
+<Field label="catalog" name="catalog" type="string"/>
+<Field label="schema" name="schema" type="string"/>
+<Field label="object" name="object" type="string"/>
+<Field label="keyfields" name="keyfields" type="string"/>
+<Field name="filter" type="string"/>
+<Field label="description" name="description" type="string"/>
+<Field format="excel:yyyy\-mm\-dd\ hh:mm:ss" label="created" name="created" type="date"/>
+<Field format="excel:yyyy\-mm\-dd\ hh:mm:ss" label="lastmodified" name="lastmodified" type="date"/>
+<Field label="lastrefreshed" name="lastrefreshed" type="string"/>
+<Field label="numrows" name="rowcount" type="string"/>
+<Field label="datasize" name="datasize" type="string"/>
+<Field name="checksum" type="string"/>
+<Field name="checksum_binary" type="string"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="dataobjects_sql">
+<attr name="value"><![CDATA[USE _meta;
+IF OBJECT_ID('dbo._object_version', 'U') IS NOT NULL
+    DROP TABLE dbo._object_version;
+IF OBJECT_ID('dbo._object', 'U') IS NOT NULL
+    DROP TABLE dbo._object;
+CREATE TABLE dbo._object (
+    _id INT IDENTITY(1,1) PRIMARY KEY,
+    _type VARCHAR(32) NOT NULL,
+    _name VARCHAR(256) NOT NULL,
+    _host VARCHAR(256) NOT NULL,
+    _catalog VARCHAR(256) NOT NULL,
+    _schema VARCHAR(256) NOT NULL,
+    _object VARCHAR(256) NOT NULL,
+    _keyfields VARCHAR(1024),
+    _filter VARCHAR(MAX),
+    _description VARCHAR(MAX),
+    _created DATETIME DEFAULT CURRENT_TIMESTAMP,
+    _modified DATETIME DEFAULT CURRENT_TIMESTAMP,
+    _refreshed DATETIME,
+    _numrows BIGINT,
+    _checksum BIGINT,
+    _checksum_binary BIGINT,
+    _datasizemb NUMERIC(8,2),
+    CONSTRAINT CHK_meta_object_type CHECK (_type IN ('db', 'db-large', 'ldap', 'salesforce', 'file')),
+    CONSTRAINT UQ_meta_object UNIQUE(_type, _name, _host, _catalog, _schema)
+);
+CREATE TABLE dbo._object_version (
+    _id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    _object_id INT NOT NULL,
+    _created DATETIME DEFAULT CURRENT_TIMESTAMP,
+    _numrows BIGINT,
+    _checksum BIGINT,
+    _checksum_binary BIGINT,
+    _datasize NUMERIC(8,2),
+    FOREIGN KEY (_object_id) REFERENCES dbo._object(_id)
+    ON DELETE CASCADE
+);]]></attr>
+<SingleType name="multiline"/>
+</GraphParameter>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DBExecute" guiX="245" guiY="100" id="DBEXECUTE" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[${dataobjects_sql}]]></attr>
+</Node>
+</Phase>
+<Phase number="1">
+<Node dbConnection="JDBC0" dbTable="_meta.dbo._object" guiName="DatabaseWriter" guiX="670" guiY="200" id="DATABASE_WRITER" type="DB_OUTPUT_TABLE"/>
+<Node guiName="Map" guiX="420" guiY="250" id="MAP" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.type = $in.0.type;
+	$out.0.name = $in.0.name;
+	$out.0.host = $in.0.host;
+	$out.0.catalog = $in.0.catalog;
+	$out.0.schema = $in.0.schema;
+	$out.0.object = $in.0.object;
+	$out.0.keyfields = $in.0.keyfields;
+	$out.0.filter = $in.0.filter;
+	$out.0.description = $in.0.description;
+	$out.0.created = $in.0.created;
+	$out.0.lastmodified = $in.0.lastmodified;
+	$out.0.lastrefreshed = $in.0.lastrefreshed;
+	$out.0.rowcount = $in.0.rowcount;
+	$out.0.datasize = $in.0.datasize;
+	$out.0.checksum = $in.0.checksum;
+	$out.0.checksum_binary = $in.0.checksum_binary;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node fileURL="${META_DIR}/dataobjects.xlsx" guiName="SpreadsheetDataReader" guiX="170" guiY="325" id="SPREADSHEET_DATA_READER1" type="SPREADSHEET_READER"/>
+<Edge fromNode="MAP:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (out)" toNode="DATABASE_WRITER:0"/>
+<Edge fromNode="SPREADSHEET_DATA_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (output)" toNode="MAP:0"/>
+</Phase>
+</Graph>

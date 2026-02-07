@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Record fieldDelimiter="|" name="dataobjects" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field name="id" type="long"/>
+<Field name="type" type="string"/>
+<Field name="name" type="string"/>
+<Field name="host" type="string"/>
+<Field name="catalog" type="string"/>
+<Field name="schema" type="string"/>
+<Field name="object" type="string"/>
+<Field name="keyfields" type="string"/>
+<Field name="filter" type="string"/>
+<Field name="frequency" type="integer"/>
+<Field name="status" type="string"/>
+<Field name="description" type="string"/>
+<Field format="excel:yyyy-MM-dd HH:mm:ss" name="created" type="date"/>
+<Field format="excel:yyyy-MM-dd HH:mm:ss" name="modified" type="date"/>
+<Field format="excel:yyyy-MM-dd HH:mm:ss" name="verified" type="date"/>
+<Field format="excel:yyyy-MM-dd HH:mm:ss" name="refreshed" type="date"/>
+<Field name="numrows" type="long"/>
+<Field name="checksum" type="long"/>
+<Field name="checksum_binary" type="long"/>
+<Field name="datasizemb" scale="5" type="decimal"/>
+</Record>

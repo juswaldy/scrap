@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Thu Dec 11 14:32:41 PST 2025" guiVersion="7.1.0.8" id="1765759794635" licenseCode="CLCDSTWUXX28767030SP" name="00-scrap" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/dataobjects.fmt" id="Metadata0"/>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="," label="app-perms" name="app_perms" previewAttachment="${DATAIN_DIR}/app-perms.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" recordDelimiter="\r\n" skipSourceRows="1" type="delimited">
+<Field label="_group" name="_group" type="string"/>
+<Field label="_access_type" name="_access_type" type="string"/>
+<Field label="_entity" name="_entity" type="string"/>
+<Field label="_entity_name" name="_entity_name" type="string"/>
+<Field label="_entity" name="_entity_1" type="string"/>
+<Field label="_entity_name" name="_entity_name_1" type="string"/>
+<Field eofAsDelimiter="true" label="_cmd" name="_cmd" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata2">
+<Record fieldDelimiter="," name="datapermissions" previewAttachment="${DATAIN_DIR}/datapermissions.csv" previewAttachmentCharset="UTF-8" quoteChar="&quot;" quotedStrings="true" recordDelimiter="\r\n" skipSourceRows="1" type="delimited">
+<Field label="_Group" name="_Group" type="string"/>
+<Field label="_Access Type" name="_Access_Type" type="string"/>
+<Field label="_dim_1(GL01)" name="_dim_1_GL01" type="string"/>
+<Field label="_dim_2(GL02)" name="_dim_2_GL02" type="string"/>
+<Field label="_dim_3(GL03)" name="_dim_3_GL03" type="string"/>
+<Field label="_dim_4(GL04)" name="_dim_4_GL04" type="string"/>
+<Field label="_dim_5(GL05)" name="_dim_5_GL05" type="string"/>
+<Field label="_dim_6(GL06)" name="_dim_6_GL06" type="string"/>
+<Field label="_dim_7(YEAR)" name="_dim_7_YEAR" type="string"/>
+<Field label="_dim_8(PERD)" name="_dim_8_PERD" type="string"/>
+<Field label="_dim_9(SCNR)" name="_dim_9_SCNR" type="string"/>
+<Field label="_dim_10(FLEX01)" name="_dim_10_FLEX01" type="string"/>
+<Field label="_dim_11(FLEX02)" name="_dim_11_FLEX02" type="string"/>
+<Field label="_dim_12(FLEX03)" name="_dim_12_FLEX03" type="string"/>
+<Field label="_dim_13(FLEX04)" name="_dim_13_FLEX04" type="string"/>
+<Field label="_dim_14(MEASURE)" name="_dim_14_MEASURE" type="string"/>
+<Field eofAsDelimiter="true" label="_cmd" name="_cmd" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata3">
+<Record fieldDelimiter="," name="groups" previewAttachment="${DATAIN_DIR}/groups.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" recordDelimiter="\r\n" skipSourceRows="1" type="delimited">
+<Field label="_Group Name" name="_Group_Name" type="string"/>
+<Field label="_Email" name="_Email" type="string"/>
+<Field eofAsDelimiter="true" label="_cmd" name="_cmd" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata4">
+<Record fieldDelimiter="," name="users" previewAttachment="${DATAIN_DIR}/users.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" recordDelimiter="\r\n" skipSourceRows="1" type="delimited">
+<Field name="_first_name" type="string"/>
+<Field name="_last_name" type="string"/>
+<Field name="_email" type="string"/>
+<Field name="_manager" type="boolean"/>
+<Field name="_contributor" type="boolean"/>
+<Field name="_modeler" type="boolean"/>
+<Field name="_dashboards" type="string"/>
+<Field name="_reports" type="string"/>
+<Field name="_copilot" type="boolean"/>
+<Field name="_viewer" type="boolean"/>
+<Field name="_admin" type="boolean"/>
+<Field name="_phone_number" type="string"/>
+<Field name="_active" type="boolean"/>
+<Field name="_notification_email" type="string"/>
+<Field eofAsDelimiter="true" name="_last_login" type="string"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC0" type="JDBC"/>
+<GraphParameters>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DBExecute" guiX="95" guiY="75" id="DBEXECUTE" type="DB_EXECUTE">
+<attr name="sqlQuery"><![CDATA[USE Vena;
+--GO
+
+-- app-perms
+IF OBJECT_ID(N'[dbo].[app_perms]', N'U') IS NOT NULL
+    DROP TABLE [dbo].[app_perms];
+--GO
+
+CREATE TABLE [dbo].[app_perms] (
+    [_group]          NVARCHAR(255) NULL,
+    [_access_type]    NVARCHAR(255) NULL,
+    [_entity]         NVARCHAR(255) NULL,
+    [_entity_name]    NVARCHAR(255) NULL,
+    [_entity_1]       NVARCHAR(255) NULL,
+    [_entity_name_1]  NVARCHAR(255) NULL,
+    [_cmd]            NVARCHAR(255) NULL
+);
+--GO
+
+
+-- datapermissions
+IF OBJECT_ID(N'[dbo].[datapermissions]', N'U') IS NOT NULL
+    DROP TABLE [dbo].[datapermissions];
+--GO
+
+CREATE TABLE [dbo].[datapermissions] (
+    [_Group]           NVARCHAR(255) NULL,
+    [_Access_Type]     NVARCHAR(255) NULL,
+    [_dim_1_GL01]      NVARCHAR(255) NULL,
+    [_dim_2_GL02]      NVARCHAR(1024) NULL,
+    [_dim_3_GL03]      NVARCHAR(1024) NULL,
+    [_dim_4_GL04]      NVARCHAR(1024) NULL,
+    [_dim_5_GL05]      NVARCHAR(1024) NULL,
+    [_dim_6_GL06]      NVARCHAR(1024) NULL,
+    [_dim_7_YEAR]      NVARCHAR(255) NULL,
+    [_dim_8_PERD]      NVARCHAR(255) NULL,
+    [_dim_9_SCNR]      NVARCHAR(255) NULL,
+    [_dim_10_FLEX01]   NVARCHAR(255) NULL,
+    [_dim_11_FLEX02]   NVARCHAR(255) NULL,
+    [_dim_12_FLEX03]   NVARCHAR(255) NULL,
+    [_dim_13_FLEX04]   NVARCHAR(255) NULL,
+    [_dim_14_MEASURE]  NVARCHAR(255) NULL,
+    [_cmd]             NVARCHAR(255) NULL
+);
+--GO
+
+
+-- groups
+IF OBJECT_ID(N'[dbo].[groups]', N'U') IS NOT NULL
+    DROP TABLE [dbo].[groups];
+--GO
+
+CREATE TABLE [dbo].[groups] (
+    [_Group_Name]  NVARCHAR(255) NULL,
+    [_Email]       NVARCHAR(255) NULL,
+    [_cmd]         NVARCHAR(255) NULL
+);
+--GO
+
+
+-- users
+IF OBJECT_ID(N'[dbo].[users]', N'U') IS NOT NULL
+    DROP TABLE [dbo].[users];
+--GO
+
+CREATE TABLE [dbo].[users] (
+    [_first_name]          NVARCHAR(255) NULL,
+    [_last_name]           NVARCHAR(255) NULL,
+    [_email]               NVARCHAR(255) NULL,
+    [_manager]             BIT NULL,
+    [_contributor]         BIT NULL,
+    [_modeler]             BIT NULL,
+    [_dashboards]          NVARCHAR(MAX) NULL,
+    [_reports]             NVARCHAR(MAX) NULL,
+    [_copilot]             BIT NULL,
+    [_viewer]              BIT NULL,
+    [_admin]               BIT NULL,
+    [_phone_number]        NVARCHAR(255) NULL,
+    [_active]              BIT NULL,
+    [_notification_email]  NVARCHAR(255) NULL,
+    [_last_login]          NVARCHAR(255) NULL
+);
+--GO]]></attr>
+<attr name="guiDescription"><![CDATA[Rebuild tables]]></attr>
+</Node>
+</Phase>
+<Phase number="5">
+<Node dbConnection="JDBC0" dbTable="Vena.dbo.datapermissions" guiName="DatabaseWriter" guiX="320" guiY="475" id="DATABASE_WRITER" type="DB_OUTPUT_TABLE"/>
+<Node dbConnection="JDBC0" dbTable="Vena.dbo.app_perms" guiName="DatabaseWriter" guiX="320" guiY="300" id="DATABASE_WRITER1" type="DB_OUTPUT_TABLE"/>
+<Node dbConnection="JDBC0" dbTable="Vena.dbo.groups" guiName="DatabaseWriter" guiX="320" guiY="650" id="DATABASE_WRITER2" type="DB_OUTPUT_TABLE"/>
+<Node dbConnection="JDBC0" dbTable="Vena.dbo.users" guiName="DatabaseWriter" guiX="320" guiY="825" id="DATABASE_WRITER3" type="DB_OUTPUT_TABLE"/>
+<Node fileURL="${DATAIN_DIR}/app-perms.csv" guiName="FlatFileReader" guiX="95" guiY="300" id="FLAT_FILE_READER" type="FLAT_FILE_READER"/>
+<Node fileURL="${DATAIN_DIR}/datapermissions.csv" guiName="FlatFileReader" guiX="95" guiY="475" id="FLAT_FILE_READER1" type="FLAT_FILE_READER"/>
+<Node fileURL="${DATAIN_DIR}/groups.csv" guiName="FlatFileReader" guiX="95" guiY="650" id="FLAT_FILE_READER2" type="FLAT_FILE_READER"/>
+<Node fileURL="${DATAIN_DIR}/users.csv" guiName="FlatFileReader" guiX="95" guiY="825" id="FLAT_FILE_READER3" type="FLAT_FILE_READER"/>
+<Edge fromNode="FLAT_FILE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (output)" toNode="DATABASE_WRITER1:0"/>
+<Edge fromNode="FLAT_FILE_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (output)" toNode="DATABASE_WRITER:0"/>
+<Edge fromNode="FLAT_FILE_READER2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (output)" toNode="DATABASE_WRITER2:0"/>
+<Edge fromNode="FLAT_FILE_READER3:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" metadata="Metadata4" outPort="Port 0 (output)" toNode="DATABASE_WRITER3:0"/>
+</Phase>
+</Graph>

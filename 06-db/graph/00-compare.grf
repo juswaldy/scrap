@@ -1,0 +1,667 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="Juswaldy.Jusman" created="Fri Oct 03 14:07:26 PDT 2025" guiVersion="7.1.0.8" id="1759526289477" licenseCode="CLCDSTWUXX28767030SP" name="00-readytt" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/TheMetadata.fmt" id="Metadata0"/>
+<Metadata id="Metadata2">
+<Record fieldDelimiter="|" name="datahub" recordDelimiter="\r\n" type="delimited"/>
+<Sql connection="JDBC1" sqlOptimization="true" sqlQuery="SELECT * FROM [${catalog}].[${schema}].[${object}]" unknownJdbcTypesAsString="true"/>
+</Metadata>
+<Metadata id="Metadata7">
+<Record fieldDelimiter=";" name="SECTION_MASTER" recordDelimiter="\n" type="delimited">
+<Field name="APPID" size="10" type="integer"/>
+<Field name="YR_CDE" size="4" type="string"/>
+<Field name="TRM_CDE" size="2" type="string"/>
+<Field name="CRS_CDE" size="30" type="string"/>
+<Field name="REQUEST_NUM" size="6" type="string"/>
+<Field name="SUBTERM_CDE" size="2" type="string"/>
+<Field name="LEAD_INSTRUCTR_ID" size="10" type="integer"/>
+<Field name="INSTITUT_DIV_CDE" size="2" type="string"/>
+<Field name="DIVISION_CDE" size="2" type="string"/>
+<Field name="SHORT_CRS_TITLE_1" size="15" type="string"/>
+<Field name="SHORT_CRS_TITLE_2" size="15" type="string"/>
+<Field name="CRS_TITLE" size="35" type="string"/>
+<Field name="CRS_TITLE_2" size="35" type="string"/>
+<Field name="SECTION_STS" size="1" type="string"/>
+<Field name="CRS_CAPACITY" size="10" type="integer"/>
+<Field name="CRS_ENROLLMENT" size="10" type="integer"/>
+<Field name="CHGD_ENROLL_FLG" size="1" type="string"/>
+<Field name="WLISTED_REG_COUNT" size="10" type="integer"/>
+<Field name="PREREG_COUNT" size="10" type="integer"/>
+<Field name="CURRENT_REG_COUNT" size="10" type="integer"/>
+<Field name="HISTORY_REG_COUNT" size="10" type="integer"/>
+<Field name="TUITION_CDE" size="2" type="string"/>
+<Field name="REFUND_CDE" size="2" type="string"/>
+<Field name="EXCL_FROM_TUITION" size="1" type="string"/>
+<Field name="DAY_EVENING_STS" size="1" type="string"/>
+<Field name="SCHED_IS_CHANGEABL" size="1" type="string"/>
+<Field name="PREREQ_CDE" size="4" type="string"/>
+<Field name="GRADE_SCALE_CDE" size="2" type="string"/>
+<Field length="5" name="CREDIT_HRS" scale="2" size="6" type="decimal"/>
+<Field name="CREDIT_TYPE_CDE" size="2" type="string"/>
+<Field name="GRADES_ENTERED" size="1" type="string"/>
+<Field name="GRP_REG_CDE" size="10" type="string"/>
+<Field length="5" name="LOAD_CONTACT_HRS" scale="2" size="6" type="decimal"/>
+<Field name="ADV_REQ_CDE" size="8" type="string"/>
+<Field length="5" name="TUITION_HRS" scale="2" size="6" type="decimal"/>
+<Field name="THIRDPARTY_BILL_ID" size="10" type="integer"/>
+<Field name="IPEDS_CIP_CDE" size="6" type="string"/>
+<Field name="X_LISTED_SECTION" size="1" type="string"/>
+<Field name="X_LISTED_PARNT_CRS" size="30" type="string"/>
+<Field name="SCHOOL_CDE" size="3" type="string"/>
+<Field name="SECTION_NOTE" size="45" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="FIRST_BEGIN_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="LAST_END_DTE" size="23" type="date"/>
+<Field name="CENSUS_METHOD" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="CENSUS_DTE" size="23" type="date"/>
+<Field name="CENSUS_VALUE" size="10" type="integer"/>
+<Field name="LAST_WITHDRAWAL_VALUE" size="10" type="integer"/>
+<Field name="CRS_DURATION" size="10" type="integer"/>
+<Field name="MIN_ENROLLMENT" size="10" type="integer"/>
+<Field name="ADD_TO_SPECIAL_GPA" size="1" type="string"/>
+<Field name="ID_NUM_SPONSR" size="10" type="integer"/>
+<Field name="PROJECT_CODE" size="10" type="string"/>
+<Field name="SESS_CDE" size="8" type="string"/>
+<Field name="CRS_TYPE" size="5" type="string"/>
+<Field name="CRS_ALLOW_WAITLIST" size="1" type="string"/>
+<Field length="5" name="CRS_CLOCK_HRS" scale="2" size="6" type="decimal"/>
+<Field name="CRS_ESTM_ENROLL" size="10" type="integer"/>
+<Field name="CRS_MEET_TIMES" size="10" type="integer"/>
+<Field name="CRS_STATE_TYPE" size="6" type="string"/>
+<Field name="CRS_INSTRTN_METHOD" size="3" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="CRS_ENROLL_DLINE" size="23" type="date"/>
+<Field name="CRS_ENROLL_TYPE" size="3" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="CRS_DROP_DEAD_DTE" size="23" type="date"/>
+<Field name="CRS_CANCEL_FLG" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="CRS_CANCEL_DTE" size="23" type="date"/>
+<Field name="CRS_CANCEL_REASON" size="3" type="string"/>
+<Field name="CRS_REQ_FOR_REG" type="string"/>
+<Field name="CRS_FEE_COLLECT_BY" size="2" type="string"/>
+<Field name="CRS_ACAD_CREDIT" size="1" type="string"/>
+<Field name="CRS_FOR_PUB_PG_NUM" size="10" type="integer"/>
+<Field name="CRS_TECH_DELIVERY" size="5" type="string"/>
+<Field name="CRS_TRANSMISSION" size="5" type="string"/>
+<Field name="CRS_RECEPTION" size="5" type="string"/>
+<Field name="ID_NUM_PROGMR" size="10" type="integer"/>
+<Field name="FIXED_VAR_CREDIT" size="1" type="string"/>
+<Field name="FIXED_VAR_CLOCK" size="1" type="string"/>
+<Field name="PROG_CATEGORY" size="2" type="string"/>
+<Field name="SPEC_FUND_SOURCE" size="2" type="string"/>
+<Field name="CONTRACT_CRS" size="1" type="string"/>
+<Field name="CONTRACT_CDE" size="10" type="string"/>
+<Field length="5" name="LECTURE_HRS" scale="2" size="6" type="decimal"/>
+<Field length="5" name="LECTURE_LAB_HRS" scale="2" size="6" type="decimal"/>
+<Field length="5" name="LAB_HRS" scale="2" size="6" type="decimal"/>
+<Field name="CRS_DISTANCE_LEARN" size="1" type="string"/>
+<Field name="DIST_ED_PROVIDER" size="4" type="string"/>
+<Field name="WORK_EXP" size="3" type="string"/>
+<Field name="COURSE_TEXT" type="string"/>
+<Field name="SHOW_ON_WEB" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="ADD_BEG_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="ADD_END_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="DROP_BEG_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="DROP_END_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="FIRST_FINAL_GRD_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="LAST_FINAL_GRD_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="FIRST_MIDTRM_GRD_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="LAST_MIDTRM_GRD_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="LAST_WITHDRAW_PASS_DTE" size="23" type="date"/>
+<Field name="LOC_CDE" size="5" type="string"/>
+<Field name="XLISTED_CRS_LISTS" size="1" type="string"/>
+<Field name="MUST_PAY" size="1" type="string"/>
+<Field length="5" name="MIN_CREDIT_HRS" scale="2" size="6" type="decimal"/>
+<Field length="5" name="MAX_CREDIT_HRS" scale="2" size="6" type="decimal"/>
+<Field name="PUBLIC_REGISTRATION" size="1" type="string"/>
+<Field name="MAX_ENROLLMENT" size="10" type="integer"/>
+<Field name="CRS_AUTHORIZATION_REQ" size="1" type="string"/>
+<Field name="RESERVED_REG_COUNT" size="10" type="integer"/>
+<Field name="FLEXIBLY_SCHEDULED_CRS" size="1" type="string"/>
+<Field name="IPEDS_HOUR_TYPE" size="1" type="string"/>
+<Field name="PESC_COURSE_CREDIT_BASIS_CDE" size="5" type="string"/>
+<Field name="PESC_COURSE_LEVEL_CDE" size="2" type="string"/>
+<Field name="VARIABLE_GRADE_TYPE" size="1" type="string"/>
+<Field name="DISTANCE_EDUCATION" size="1" type="string"/>
+<Field length="11" name="FLAT_FEE" scale="2" size="12" type="decimal"/>
+<Field name="BILLING_PERIOD_ID" size="10" type="integer"/>
+<Field name="BILLING_OVERRIDE_DATE" size="10" type="string"/>
+<Field name="ORG_CDE" size="6" type="string"/>
+<Field name="INTER_INSTITUTIONAL" size="1" type="string"/>
+<Field name="DUAL_ENROLLMENT_ALLOWED" size="1" type="string"/>
+<Field name="IN_DISTRICT" size="1" type="string"/>
+<Field name="STATE_FUNDED" size="1" type="string"/>
+<Field name="ST_LOCATION_DEF_APPID" size="10" type="integer"/>
+<Field name="ALLOW_DROP" size="1" type="string"/>
+<Field length="5" name="MIN_CLOCK_HRS" scale="2" size="6" type="decimal"/>
+<Field length="5" name="MAX_CLOCK_HRS" scale="2" size="6" type="decimal"/>
+<Field name="CIP_EXT" size="6" type="string"/>
+<Field name="EXCLUDE_FROM_DROP_LIMIT" size="1" type="string"/>
+<Field name="EXCLUDE_FROM_REPEAT_LIMIT" size="1" type="string"/>
+<Field name="NUMBER_OF_WEEKS" size="5" type="integer"/>
+<Field length="5" name="LECTURE_CLOCK_HRS" scale="2" size="6" type="decimal"/>
+<Field length="5" name="LAB_CLOCK_HRS" scale="2" size="6" type="decimal"/>
+<Field name="SELF_PACED" size="1" type="string"/>
+<Field name="DEV_PERFORMANCE_CRS" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="GRADE_BLACKOUT_BEGIN_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="GRADE_BLACKOUT_END_DTE" size="23" type="date"/>
+<Field name="GOID" size="10" type="integer"/>
+<Field name="ST_COST_CENTER_DEF_APPID" size="10" type="integer"/>
+<Field name="ATTENDANCE_CENSUS_DATE_EXCLUDED" size="1" type="string"/>
+<Field name="ATTENDANCE_CHECKPOINT_EXCLUDED" size="1" type="string"/>
+<Field name="IS_CBE_SECTION" size="1" type="boolean"/>
+<Field name="ALLOW_OPEN_ENTRY" size="1" type="boolean"/>
+<Field name="ALLOW_OPEN_EXIT" size="1" type="boolean"/>
+<Field name="MAX_DAY_DURATION" size="5" type="integer"/>
+<Field name="MAX_REGISTRATION_DAYS" size="5" type="integer"/>
+<Field name="GRADING_METHOD" size="1" type="string"/>
+<Field name="CRS_GROUP_ADVISING_REQ_CODES_APPID" size="10" type="integer"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="STUDENT_WITHDRAWAL_END_DATE" size="23" type="date"/>
+<Field name="CampusComEligible" size="1" type="boolean"/>
+<Field name="ALLOW_WAITLIST_USHER" size="1" type="boolean"/>
+<Field name="UDEF_1A_1" size="1" type="string"/>
+<Field name="UDEF_1A_2" size="1" type="string"/>
+<Field name="UDEF_1A_3" size="1" type="string"/>
+<Field name="UDEF_1A_4" size="1" type="string"/>
+<Field name="UDEF_1A_5" size="1" type="string"/>
+<Field name="UDEF_2A_1" size="2" type="string"/>
+<Field name="UDEF_2A_2" size="2" type="string"/>
+<Field name="UDEF_2A_3" size="2" type="string"/>
+<Field name="UDEF_3A_1" size="3" type="string"/>
+<Field name="UDEF_3A_2" size="3" type="string"/>
+<Field name="UDEF_3A_3" size="3" type="string"/>
+<Field name="UDEF_5A_1" size="5" type="string"/>
+<Field name="UDEF_5A_2" size="5" type="string"/>
+<Field name="UDEF_5A_3" size="5" type="string"/>
+<Field name="UDEF_TXT" size="15" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_1" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_2" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_3" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_4" size="23" type="date"/>
+<Field length="3" name="UDEF_3_2_1" scale="2" size="4" type="decimal"/>
+<Field length="3" name="UDEF_3_2_2" scale="2" size="4" type="decimal"/>
+<Field length="5" name="UDEF_5_2_1" scale="2" size="6" type="decimal"/>
+<Field length="5" name="UDEF_5_2_2" scale="2" size="6" type="decimal"/>
+<Field length="5" name="UDEF_5_2_3" scale="2" size="6" type="decimal"/>
+<Field length="5" name="UDEF_5_2_4" scale="2" size="6" type="decimal"/>
+<Field length="7" name="UDEF_7_2_1" scale="2" size="8" type="decimal"/>
+<Field length="7" name="UDEF_7_2_2" scale="2" size="8" type="decimal"/>
+<Field length="7" name="UDEF_7_2_3" scale="2" size="8" type="decimal"/>
+<Field length="7" name="UDEF_7_2_4" scale="2" size="8" type="decimal"/>
+<Field length="7" name="UDEF_7_2_5" scale="2" size="8" type="decimal"/>
+<Field length="7" name="UDEF_7_2_6" scale="2" size="8" type="decimal"/>
+<Field length="7" name="UDEF_7_2_7" scale="2" size="8" type="decimal"/>
+<Field name="APPROWVERSION" size="8" type="byte"/>
+<Field name="USER_NAME" size="513" type="string"/>
+<Field name="JOB_NAME" size="30" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="JOB_TIME" size="23" type="date"/>
+<Field name="checksum" type="long"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="|" name="source" recordDelimiter="\r\n" type="delimited"/>
+<Sql connection="JDBC0" sqlOptimization="true" sqlQuery="SELECT * FROM [${catalog}].[${schema}].[${object}]" unknownJdbcTypesAsString="true"/>
+</Metadata>
+<Metadata id="Metadata3">
+<Record fieldDelimiter=";" name="stats" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="appid" type="integer"/>
+<Field name="schema_name" size="128" type="string"/>
+<Field name="table_name" size="128" type="string"/>
+<Field name="num_rows" size="19" type="long"/>
+<Field length="26" name="total_mb" scale="6" size="27" type="decimal"/>
+<Field length="26" name="used_mb" scale="6" size="27" type="decimal"/>
+<Field length="26" name="dataspace_mb" scale="6" size="27" type="decimal"/>
+<Field name="checksum" type="long"/>
+<Field name="checksum_binary" type="long"/>
+<Field name="is_matching" type="boolean"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata4">
+<Record fieldDelimiter=";" name="STUD_SESS_ASGN_EXT" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="SESS_CDE" size="8" type="string"/>
+<Field name="ID_NUM" size="10" type="integer"/>
+<Field name="UDEF_1A_1" size="1" type="string"/>
+<Field name="UDEF_1A_2" size="1" type="string"/>
+<Field name="UDEF_1A_3" size="1" type="string"/>
+<Field name="UDEF_2A_1" size="2" type="string"/>
+<Field name="UDEF_2A_2" size="2" type="string"/>
+<Field name="UDEF_2A_3" size="2" type="string"/>
+<Field name="UDEF_3A_1" size="3" type="string"/>
+<Field name="UDEF_3A_2" size="3" type="string"/>
+<Field name="UDEF_3A_3" size="3" type="string"/>
+<Field name="UDEF_5A_1" size="5" type="string"/>
+<Field name="UDEF_5A_2" size="5" type="string"/>
+<Field name="UDEF_5A_3" size="5" type="string"/>
+<Field name="UDEF_ID_1" size="10" type="integer"/>
+<Field name="UDEF_ID_2" size="10" type="integer"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_1" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_2" size="23" type="date"/>
+<Field length="3" name="UDEF_3_2_1" scale="2" size="4" type="decimal"/>
+<Field length="5" name="UDEF_5_2_1" scale="2" size="6" type="decimal"/>
+<Field length="5" name="UDEF_5_2_2" scale="2" size="6" type="decimal"/>
+<Field length="5" name="UDEF_5_2_3" scale="2" size="6" type="decimal"/>
+<Field length="7" name="UDEF_7_2_1" scale="2" size="8" type="decimal"/>
+<Field length="7" name="UDEF_7_2_2" scale="2" size="8" type="decimal"/>
+<Field length="11" name="UDEF_11_2_1" scale="2" size="12" type="decimal"/>
+<Field length="11" name="UDEF_11_2_2" scale="2" size="12" type="decimal"/>
+<Field name="USER_NAME" size="513" type="string"/>
+<Field name="JOB_NAME" size="30" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="JOB_TIME" size="23" type="date"/>
+<Field name="checksum" type="long"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata5">
+<Record fieldDelimiter=";" name="STUD_TERM_SUM_DIV" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="APPID" size="10" type="integer"/>
+<Field name="ID_NUM" size="10" type="integer"/>
+<Field name="DIV_CDE" size="2" type="string"/>
+<Field name="YR_CDE" size="4" type="string"/>
+<Field name="TRM_CDE" size="2" type="string"/>
+<Field name="TRANSACTION_STS" size="1" type="string"/>
+<Field name="ADVISOR_ID_NUM_1" size="10" type="integer"/>
+<Field name="ADVISOR_ID_NUM_2" size="10" type="integer"/>
+<Field name="ADVISOR_ID_NUM_3" size="10" type="integer"/>
+<Field name="DEGREE_CDE" size="5" type="string"/>
+<Field name="MAJOR_1" size="5" type="string"/>
+<Field name="MAJOR_2" size="5" type="string"/>
+<Field name="MAJOR_3" size="5" type="string"/>
+<Field name="MINOR_1" size="5" type="string"/>
+<Field name="MINOR_2" size="5" type="string"/>
+<Field name="MINOR_3" size="5" type="string"/>
+<Field name="ACADEMIC_HONORS" size="2" type="string"/>
+<Field name="ACADEMIC_PROBATION" size="2" type="string"/>
+<Field name="CLASS_CDE" size="2" type="string"/>
+<Field length="5" name="HRS_ENROLLED" scale="2" size="6" type="decimal"/>
+<Field name="NUM_OF_CRS" size="10" type="integer"/>
+<Field length="5" name="PT_FT_HRS" scale="2" size="6" type="decimal"/>
+<Field name="PT_FT_STS" size="1" type="string"/>
+<Field name="CLASS_RANK" size="5" type="string"/>
+<Field name="CLASS_RANK_HI_RANG" size="5" type="string"/>
+<Field name="CLASS_SIZE" size="5" type="string"/>
+<Field length="5" name="PROBATION_HR_TOTAL" scale="2" size="6" type="decimal"/>
+<Field length="5" name="HONORS_HR_TOTAL" scale="2" size="6" type="decimal"/>
+<Field name="GRA_INEL_FOR_HONOR" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="LAST_DTE_OF_ATTEND" size="23" type="date"/>
+<Field length="7" name="XFER_HRS_ATTEMPTED" scale="2" size="8" type="decimal"/>
+<Field length="7" name="XFER_HRS_EARNED" scale="2" size="8" type="decimal"/>
+<Field length="7" name="XFER_HRS_GPA" scale="2" size="8" type="decimal"/>
+<Field length="7" name="XFER_QUAL_PTS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="XFER_GPA" scale="4" size="8" type="decimal"/>
+<Field length="7" name="LOCAL_HRS_ATTEMPT" scale="2" size="8" type="decimal"/>
+<Field length="7" name="LOCAL_HRS_EARNED" scale="2" size="8" type="decimal"/>
+<Field length="7" name="LOCAL_HRS_GPA" scale="2" size="8" type="decimal"/>
+<Field length="7" name="LOCAL_QUAL_PTS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="LOCAL_GPA" scale="4" size="8" type="decimal"/>
+<Field length="7" name="CAREER_HRS_ATTEMPT" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_HRS_EARNED" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_HRS_GPA" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_QUAL_PTS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_GPA" scale="4" size="8" type="decimal"/>
+<Field length="7" name="TRM_HRS_ATTEMPT" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_HRS_EARNED" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_HRS_GPA" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_QUAL_PTS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_GPA" scale="4" size="8" type="decimal"/>
+<Field length="7" name="CAREER_CRTYPE1_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_CRTYPE2_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_CRTYPE3_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_CRTYPE1_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_CRTYPE2_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_CRTYPE3_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_GRADE_1_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_GRADE_2_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_GRADE_3_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_GRADE_4_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_GRADE_5_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="CAREER_GRADE_6_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_GRADE_1_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_GRADE_2_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_GRADE_3_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_GRADE_4_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_GRADE_5_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="TRM_GRADE_6_HRS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="ALT1_HRS_ATTEMPTED" scale="2" size="8" type="decimal"/>
+<Field length="7" name="ALT1_HRS_EARNED" scale="2" size="8" type="decimal"/>
+<Field length="7" name="ALT1_HRS_GPA" scale="2" size="8" type="decimal"/>
+<Field length="7" name="ALT1_QUAL_PTS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="ALT1_GPA" scale="4" size="8" type="decimal"/>
+<Field length="7" name="ALT2_HRS_ATTEMPTED" scale="2" size="8" type="decimal"/>
+<Field length="7" name="ALT2_HRS_EARNED" scale="2" size="8" type="decimal"/>
+<Field length="7" name="ALT2_HRS_GPA" scale="2" size="8" type="decimal"/>
+<Field length="7" name="ALT2_QUAL_PTS" scale="2" size="8" type="decimal"/>
+<Field length="7" name="ALT2_GPA" scale="4" size="8" type="decimal"/>
+<Field name="UDEF_1A_1" size="1" type="string"/>
+<Field name="UDEF_1A_2" size="1" type="string"/>
+<Field name="UDEF_1A_3" size="1" type="string"/>
+<Field name="UDEF_1A_4" size="1" type="string"/>
+<Field name="UDEF_1A_5" size="1" type="string"/>
+<Field name="UDEF_2A_1" size="2" type="string"/>
+<Field name="UDEF_2A_2" size="2" type="string"/>
+<Field name="UDEF_2A_3" size="2" type="string"/>
+<Field name="UDEF_3A_1" size="3" type="string"/>
+<Field name="UDEF_3A_2" size="3" type="string"/>
+<Field name="UDEF_3A_3" size="3" type="string"/>
+<Field name="UDEF_5A_1" size="5" type="string"/>
+<Field length="3" name="UDEF_3_2_1" scale="2" size="4" type="decimal"/>
+<Field length="3" name="UDEF_3_2_2" scale="2" size="4" type="decimal"/>
+<Field length="5" name="UDEF_5_2_1" scale="2" size="6" type="decimal"/>
+<Field length="5" name="UDEF_5_2_2" scale="2" size="6" type="decimal"/>
+<Field length="5" name="UDEF_5_2_3" scale="2" size="6" type="decimal"/>
+<Field length="5" name="UDEF_5_2_4" scale="2" size="6" type="decimal"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_1" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_2" size="23" type="date"/>
+<Field name="UDEF_ID_1" size="10" type="integer"/>
+<Field name="SNAPSHOT_TAKEN" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="SNAPSHOT_DTE" size="23" type="date"/>
+<Field name="APPROWVERSION" size="8" type="byte"/>
+<Field name="USER_NAME" size="513" type="string"/>
+<Field name="JOB_NAME" size="30" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="JOB_TIME" size="23" type="date"/>
+<Field name="checksum" type="long"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata8">
+<Record fieldDelimiter=";" name="STUDENT_CRS_HIST" recordDelimiter="\n" type="delimited">
+<Field name="APPID" size="10" type="integer"/>
+<Field name="ID_NUM" size="10" type="integer"/>
+<Field name="YR_CDE" size="4" type="string"/>
+<Field name="TRM_CDE" size="2" type="string"/>
+<Field name="STUD_SEQ_NUM" size="10" type="integer"/>
+<Field name="CRS_CDE" size="30" type="string"/>
+<Field name="TRANSACTION_STS" size="1" type="string"/>
+<Field name="REG_METHOD" size="1" type="string"/>
+<Field name="REQUEST_NUM" size="6" type="string"/>
+<Field name="SUBTERM_CDE" size="2" type="string"/>
+<Field name="CRS_DIV" size="2" type="string"/>
+<Field name="STUD_DIV" size="2" type="string"/>
+<Field name="INSTITUT_DIV_CDE" size="2" type="string"/>
+<Field name="TRANSCRIPT_DIV" size="2" type="string"/>
+<Field name="GRADE_SCALE_CDE" size="2" type="string"/>
+<Field name="CREDIT_TYPE_CDE" size="2" type="string"/>
+<Field name="GRADE_CDE" size="3" type="string"/>
+<Field name="REPEAT_FLAG" size="1" type="string"/>
+<Field name="REPEAT_COUNT" size="10" type="integer"/>
+<Field name="PREVIOUS_GRADE" size="3" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="GRADE_CHANGED_DTE" size="23" type="date"/>
+<Field name="ABSENCES" size="10" type="integer"/>
+<Field length="5" name="CREDIT_HRS" scale="2" size="6" type="decimal"/>
+<Field length="5" name="TUITION_HRS" scale="2" size="6" type="decimal"/>
+<Field name="SHORT_CRS_TITLE_1" size="15" type="string"/>
+<Field name="SHORT_CRS_TITLE_2" size="15" type="string"/>
+<Field name="CRS_TITLE" size="35" type="string"/>
+<Field name="CRS_TITLE_2" size="35" type="string"/>
+<Field name="ADD_FLAG" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="ADD_DTE" size="23" type="date"/>
+<Field name="DROP_FLAG" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="DROP_DTE" size="23" type="date"/>
+<Field name="WAITLIST_FLAG" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="WAITLIST_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="WAITLIST_TIM" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="WAITLIST_INVITATION_DATE" size="23" type="date"/>
+<Field name="YR_TAKN_DESC_FUTR" size="4" type="string"/>
+<Field name="TRM_TAKN_DESC_FUTR" size="2" type="string"/>
+<Field name="ORG_CDE" size="6" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="ORIGINAL_REG_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="ORIGINAL_REG_TIM" size="23" type="date"/>
+<Field name="IPEDS_CIP_CDE" size="6" type="string"/>
+<Field name="X_LISTED_SECTION" size="1" type="string"/>
+<Field name="THIRDPARTY_BILL_ID" size="10" type="integer"/>
+<Field name="ADV_REQ_CDE" size="8" type="string"/>
+<Field name="DTL_SUM_REC_TYPE" size="1" type="string"/>
+<Field length="5" name="HRS_ATTEMPTED" scale="2" size="6" type="decimal"/>
+<Field length="5" name="HRS_EARNED" scale="2" size="6" type="decimal"/>
+<Field length="5" name="HRS_GPA" scale="2" size="6" type="decimal"/>
+<Field length="7" name="QUAL_PTS" scale="2" size="8" type="decimal"/>
+<Field name="SCHOOL_CDE" size="3" type="string"/>
+<Field name="ELECTIVE_FLAG" size="1" type="string"/>
+<Field name="TRM_TYPE_IDENT" size="1" type="string"/>
+<Field name="PROC_FLG_AR_RFUNDS" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="WITHDRAWAL_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="LAST_DTE_OF_ATTEND" size="23" type="date"/>
+<Field name="MIDTRM_GRASCALE_CD" size="2" type="string"/>
+<Field name="MIDTRM_CREDIT_TYP" size="2" type="string"/>
+<Field name="MIDTERM_GRA_CDE" size="3" type="string"/>
+<Field length="5" name="MIDTRM_HRS_ATTEMPT" scale="2" size="6" type="decimal"/>
+<Field length="5" name="MIDTRM_HRS_EARNED" scale="2" size="6" type="decimal"/>
+<Field length="5" name="MIDTRM_HRS_GPA" scale="2" size="6" type="decimal"/>
+<Field length="7" name="MIDTRM_QUAL_PTS" scale="2" size="8" type="decimal"/>
+<Field name="FACULTY_PTY" size="3" type="string"/>
+<Field name="STUDENT_PTY" size="3" type="string"/>
+<Field name="RANDOM_PTY" size="6" type="string"/>
+<Field name="PROGRAM_FLAG" size="2" type="string"/>
+<Field name="PROGRAM_NUM" size="10" type="integer"/>
+<Field name="STUDENT_POINTS" size="10" type="integer"/>
+<Field name="CRS_NOT_FND_ERR" size="1" type="string"/>
+<Field name="CRS_FULL_ERR" size="1" type="string"/>
+<Field name="CRS_TKN_ERR" size="1" type="string"/>
+<Field name="TIME_CONFLICT_ERR" size="1" type="string"/>
+<Field name="PREREQ_ERR" size="1" type="string"/>
+<Field name="CORER_ERR" size="1" type="string"/>
+<Field name="PROHIB_ERR" size="1" type="string"/>
+<Field name="ADD_TO_SPECIAL_GPA" size="1" type="string"/>
+<Field name="BILLING_STS" size="1" type="string"/>
+<Field name="CRS_TYPE" size="5" type="string"/>
+<Field name="SRC_CDE" size="5" type="string"/>
+<Field name="REPEAT_FLAG_LOCK" size="1" type="string"/>
+<Field length="5" name="CRS_CLOCK_HRS" scale="2" size="6" type="decimal"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="BEGIN_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="END_DTE" size="23" type="date"/>
+<Field name="ATTRIB_CDE" size="5" type="string"/>
+<Field name="WORK_EXP" size="3" type="string"/>
+<Field name="MUST_PAY" size="1" type="string"/>
+<Field name="MUST_PAY_PAID" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="MUST_PAY_DTE" size="23" type="date"/>
+<Field name="FEE_SEQUENCE_NUMBER" size="10" type="integer"/>
+<Field name="ADV_APPROVAL_REQ" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="ADV_APPROVAL_REQ_DTE" size="23" type="date"/>
+<Field name="ADV_APPROVED" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="ADV_APPROVAL_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="RESERVED_EMAIL_SENT_DTE" size="23" type="date"/>
+<Field name="PESC_COURSE_CREDIT_BASIS_CDE" size="5" type="string"/>
+<Field name="PESC_COURSE_LEVEL_CDE" size="2" type="string"/>
+<Field name="DEVELOPMENTAL_CRS" size="1" type="string"/>
+<Field length="11" name="FLAT_FEE" scale="2" size="12" type="decimal"/>
+<Field name="BILLING_PERIOD_ID" size="10" type="integer"/>
+<Field name="BILLING_OVERRIDE_DATE" size="10" type="string"/>
+<Field name="INTER_INSTITUTIONAL" size="1" type="string"/>
+<Field name="IN_DISTRICT" size="1" type="string"/>
+<Field name="STATE_FUNDED" size="1" type="string"/>
+<Field name="ST_UNFUNDED_REASON_DEF_APPID" size="10" type="integer"/>
+<Field name="HS_CREDIT_STATUS_DEF_APPID" size="10" type="integer"/>
+<Field name="INTER_INSTIT_VISITING_STUD" size="1" type="string"/>
+<Field name="ADD_TO_WITHDRAW_DROP" size="1" type="string"/>
+<Field name="WITHDRAWAL_REASON_DEF_APPID" size="10" type="integer"/>
+<Field name="ADV_APPROVAL_READY" size="1" type="string"/>
+<Field length="5" name="GRADE_NUMERIC" scale="2" size="6" type="decimal"/>
+<Field name="EDUC_SUCCESS_LEVEL_DEF_APPID" size="10" type="integer"/>
+<Field name="ESOL_COURSE" size="1" type="string"/>
+<Field name="IS_CBE_STUDENT_SECTION" size="1" type="boolean"/>
+<Field name="CRS_GROUP_ADVISING_REQ_CODES_APPID" size="10" type="integer"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="CENSUS_DTE" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="LAST_WITHDRAWAL_DTE" size="23" type="date"/>
+<Field name="ADVISOR_PARTY_APPID" size="10" type="integer"/>
+<Field name="UDEF_1A_1" size="1" type="string"/>
+<Field name="UDEF_1A_2" size="1" type="string"/>
+<Field name="UDEF_1A_3" size="1" type="string"/>
+<Field name="UDEF_2A_1" size="2" type="string"/>
+<Field name="UDEF_2A_2" size="2" type="string"/>
+<Field name="UDEF_3A_1" size="3" type="string"/>
+<Field name="UDEF_3A_2" size="3" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_1" size="23" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UDEF_DTE_2" size="23" type="date"/>
+<Field length="3" name="UDEF_3_2_1" scale="2" size="4" type="decimal"/>
+<Field length="3" name="UDEF_3_2_2" scale="2" size="4" type="decimal"/>
+<Field length="5" name="UDEF_5_2_1" scale="2" size="6" type="decimal"/>
+<Field length="5" name="UDEF_5_2_2" scale="2" size="6" type="decimal"/>
+<Field name="UDEF_1A_4" size="1" type="string"/>
+<Field name="UDEF_1A_5" size="1" type="string"/>
+<Field name="UDEF_2A_3" size="2" type="string"/>
+<Field name="UDEF_3A_3" size="3" type="string"/>
+<Field length="5" name="UDEF_5_2_3" scale="2" size="6" type="decimal"/>
+<Field name="APPROWVERSION" size="8" type="byte"/>
+<Field name="USER_NAME" size="513" type="string"/>
+<Field name="JOB_NAME" size="30" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="JOB_TIME" size="23" type="date"/>
+<Field name="checksum" type="long"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata6">
+<Record fieldDelimiter=";" name="TRANS_HIST" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="APPID" size="10" type="integer"/>
+<Field name="SOURCE_CDE" size="2" type="string"/>
+<Field name="GROUP_NUM" size="10" type="integer"/>
+<Field name="TRANS_KEY_LINE_NUM" size="10" type="integer"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="TRANS_DTE" size="23" type="date"/>
+<Field length="11" name="TRANS_AMT" scale="2" size="12" type="decimal"/>
+<Field name="TRANS_DESC" size="40" type="string"/>
+<Field name="FOLIO" size="8" type="string"/>
+<Field name="ACCT_CDE" size="30" type="string"/>
+<Field name="GL_MASTER_APPID" size="10" type="integer"/>
+<Field name="PROJECT_CODE" size="10" type="string"/>
+<Field name="ENCUMB_GL_FLAG" size="1" type="string"/>
+<Field name="ENCUMB_GL_TRANS_ST" size="1" type="string"/>
+<Field name="AP_SBS_ID_NUM" size="10" type="integer"/>
+<Field name="AP_SBS_CDE_SUBSID" size="2" type="string"/>
+<Field name="INVOICE_NUM" size="18" type="string"/>
+<Field name="ID_NUM" size="10" type="integer"/>
+<Field name="SUBSID_CDE" size="2" type="string"/>
+<Field name="OFFSET_FLAG" size="1" type="string"/>
+<Field name="SUBSID_TRANS_STS" size="1" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="PAYABLE_CHECK_DTE" size="23" type="date"/>
+<Field name="CHECK_NUM_ALPHA" size="2" type="string"/>
+<Field name="CHECK_NUM_NUM" size="10" type="integer"/>
+<Field name="TRANS_PO_NUM_GRP_N" size="10" type="integer"/>
+<Field name="PO_LINE_NUM" size="10" type="integer"/>
+<Field length="11" name="DISCOUNT" scale="2" size="12" type="decimal"/>
+<Field name="RECEIPT_NUM" size="9" type="string"/>
+<Field name="ABA_NUM" size="8" type="string"/>
+<Field name="AR_CDE" size="3" type="string"/>
+<Field name="GL_SEL_FLAG" size="1" type="string"/>
+<Field name="PARTIAL_ORDER_PO" size="1" type="string"/>
+<Field name="DISCOUNT_TAKEN" size="1" type="string"/>
+<Field name="THIRD_PTY_BILL_ID" size="10" type="integer"/>
+<Field length="11" name="THIRD_PTY_BILL_AMT" scale="2" size="12" type="decimal"/>
+<Field name="OPEN_ITEMS_INV_NUM" size="10" type="string"/>
+<Field name="CHG_FEE_CDE" size="10" type="string"/>
+<Field name="FEES_SEQUENCE_NUM" size="10" type="integer"/>
+<Field name="OI_SOURCE_CDE" size="2" type="string"/>
+<Field name="OI_GROUP_NUM" size="10" type="integer"/>
+<Field name="OI_TRANS_KEY_LINE_NUM" size="10" type="integer"/>
+<Field name="OI_TRANS_HIST_APPID" size="10" type="integer"/>
+<Field name="OI_ALLOCATION" size="1" type="string"/>
+<Field name="FAP_CDE" size="10" type="string"/>
+<Field name="FUND_CDE" size="10" type="integer"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="UNDEFINED_DTE_FLD" size="23" type="date"/>
+<Field name="UNDEFINED_1A_FLD_1" size="1" type="string"/>
+<Field name="UNDEFINED_1A_FLD_2" size="1" type="string"/>
+<Field name="UNDEFINED_10A_FLD" size="10" type="string"/>
+<Field length="11" name="UNDEFINED_11_2_FLD" scale="2" size="12" type="decimal"/>
+<Field length="5" name="WORK_PERCENT" scale="2" size="6" type="decimal"/>
+<Field name="TAX_REFUND_CDE" size="5" type="string"/>
+<Field length="11" name="TAX_REFUND_AMT" scale="2" size="12" type="decimal"/>
+<Field length="11" name="FOR_CUR_TRANS_AMT" scale="2" size="12" type="decimal"/>
+<Field length="11" name="FOR_CUR_DISCOUNT" scale="2" size="12" type="decimal"/>
+<Field name="CURR_CODE" size="3" type="string"/>
+<Field length="14" name="EXCHANGE_RATE" scale="7" size="15" type="decimal"/>
+<Field name="PAYMENT_PLAN_CDE" size="2" type="string"/>
+<Field name="PAY_PLAN_SEQ_NUM" size="10" type="integer"/>
+<Field name="AR_INVOICE_NUM" size="9" type="string"/>
+<Field name="ELIG_1098T" size="2" type="string"/>
+<Field name="CREDIT_MEMO" size="18" type="string"/>
+<Field name="ASSET_NUMBER" size="15" type="string"/>
+<Field name="CHG_TRM_TRAN_HIST" size="2" type="string"/>
+<Field name="CHG_YR_TRAN_HIST" size="5" type="string"/>
+<Field name="GOVT_FORM_CODE" size="15" type="string"/>
+<Field name="GOVT_LABEL_CODE" size="10" type="string"/>
+<Field name="PAYMENT_PLAN_NUM" size="10" type="integer"/>
+<Field name="GOID" size="10" type="integer"/>
+<Field name="BILLING_PERIOD_ID" size="10" type="integer"/>
+<Field name="IS_PAID" size="1" type="string"/>
+<Field name="APPROWVERSION" size="8" type="byte"/>
+<Field name="USER_NAME" size="513" type="string"/>
+<Field name="JOB_NAME" size="30" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss.SSS" name="JOB_TIME" size="23" type="date"/>
+<Field name="checksum" type="long"/>
+</Record>
+</Metadata>
+<Connection dbConfig="sandbox://Common/conn/${host}.cfg" id="JDBC0" type="JDBC"/>
+<Connection dbConfig="sandbox://Common/conn/Datahub.cfg" id="JDBC1" type="JDBC"/>
+<GraphParameters>
+<GraphParameter name="host" value="Jenzabar"/>
+<GraphParameter name="catalog" value="TmsEPrd"/>
+<GraphParameter name="schema" value="dbo"/>
+<GraphParameter name="object" value="TRANS_HIST"/>
+<GraphParameter name="filter" value="WHERE YEAR(TRANS_DTE) = 2023"/>
+<GraphParameter name="keyfields" value="SOURCE_CDE, GROUP_NUM, TRANS_KEY_LINE_NUM"/>
+<GraphParameter name="query">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	return "SELECT *, CHECKSUM(*) AS checksum FROM [${catalog}].[${schema}].[${object}] ${filter} ORDER BY ${keyfields}";
+}
+]]></attr>
+</GraphParameter>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameterFile fileURL="sandbox://Common/conn/env-config.prm"/>
+</GraphParameters>
+<Dictionary>
+<Entry input="true" name="source_num_rows" output="true" type="long"/>
+<Entry input="true" name="source_total_mb" output="true" type="decimal"/>
+<Entry input="true" name="is_matching" output="true" type="boolean"/>
+<Entry input="true" name="source_results" output="true" type="string"/>
+<Entry input="true" name="target_results" output="true" type="string"/>
+<Entry input="true" name="source_used_mb" output="true" type="decimal"/>
+<Entry input="true" name="source_dataspace_mb" output="true" type="decimal"/>
+<Entry input="true" name="source_checksum" output="true" type="long"/>
+<Entry input="true" name="source_checksum_binary" output="true" type="long"/>
+<Entry input="true" name="target_num_rows" output="true" type="long"/>
+<Entry input="true" name="target_total_mb" output="true" type="decimal"/>
+<Entry input="true" name="target_used_mb" output="true" type="decimal"/>
+<Entry input="true" name="target_dataspace_mb" output="true" type="decimal"/>
+<Entry input="true" name="target_checksum" output="true" type="long"/>
+<Entry input="true" name="target_checksum_binary" output="true" type="long"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node dbConnection="JDBC0" guiName="DatabaseReader" guiX="170" guiY="125" id="DATABASE_READER" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[${query}]]></attr>
+<attr name="guiDescription"><![CDATA[Get data from source table]]></attr>
+</Node>
+<Node dbConnection="JDBC1" guiName="DatabaseReader" guiX="170" guiY="350" id="DATABASE_READER1" type="DB_INPUT_TABLE">
+<attr name="sqlQuery"><![CDATA[${query}]]></attr>
+<attr name="guiDescription"><![CDATA[Get data from datahub table]]></attr>
+</Node>
+<Node guiName="DataIntersection" guiX="495" guiY="225" id="DATA_INTERSECTION" joinKey="$SOURCE_CDE=$SOURCE_CDE;$GROUP_NUM=$GROUP_NUM;$TRANS_KEY_LINE_NUM=$TRANS_KEY_LINE_NUM;$checksum=$checksum" type="DATA_INTERSECTION">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Trash" guiX="845" guiY="150" id="TRASH" type="TRASH"/>
+<Edge fromNode="DATABASE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (set A)" metadata="Metadata6" outPort="Port 0 (out)" toNode="DATA_INTERSECTION:0"/>
+<Edge fromNode="DATABASE_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 1 (set B)" metadata="Metadata6" outPort="Port 0 (out)" toNode="DATA_INTERSECTION:1"/>
+<Edge fromNode="DATA_INTERSECTION:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" outPort="Port 0 (only in A)" toNode="TRASH:0"/>
+<Edge fromNode="DATA_INTERSECTION:1" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 1 (in)" metadata="Metadata6" outPort="Port 1 (in A &amp; B)" toNode="TRASH:1"/>
+<Edge fromNode="DATA_INTERSECTION:2" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 2 (in)" outPort="Port 2 (only in B)" toNode="TRASH:2"/>
+</Phase>
+</Graph>
