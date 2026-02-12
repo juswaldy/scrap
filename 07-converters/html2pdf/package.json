@@ -1,0 +1,9 @@
+{
+  "name": "html2pdf",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "pdfkit": "^0.17.1",
+    "playwright": "^1.51.1"
+  }
+}

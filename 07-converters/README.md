@@ -1,8 +1,10 @@
 # 07-converters
 
-Small, standalone Python CLI converters.
+Small, standalone CLI converters (Python and Node.js).
 
 ## Requirements
+
+### Python tools
 
 - Python 3.8+
 
@@ -11,6 +13,16 @@ Install optional dependencies depending on which tool you use:
 ```bash
 python -m pip install --upgrade pip
 python -m pip install openpyxl pandas markdown
+```
+
+### Node.js tools
+
+- Node.js 18+
+
+```bash
+cd html2pdf
+npm install
+npx playwright install chromium
 ```
 
 ## Tools
@@ -64,3 +76,19 @@ Type inference rules:
 - `NVARCHAR(n)` for text columns where `n` is the max observed string length (capped at 255).
 - Mixed/unclear/missing values fall back to `NVARCHAR(255)`.
 - Headers must be non-empty and unique (case-insensitive).
+
+### `html2pdf/convert.js` — HTML → single-page PDF
+
+Converts an HTML file into a **single long one-page PDF** with a fixed width using Playwright (Chromium) and PDFKit.
+
+```bash
+node html2pdf/convert.js input.html output.pdf [width_in]
+```
+
+The optional third argument is the PDF width in inches (defaults to `8.5`).
+
+Example:
+
+```bash
+node html2pdf/convert.js report.html report.pdf 11
+```
