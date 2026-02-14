@@ -13,6 +13,9 @@ dist/
 .coverage
 htmlcov/
 
+# Node artifacts
+node_modules/
+
 # Virtual environments & environment files
 .venv/
 venv/
