@@ -24,10 +24,8 @@ Example
 
 ## Notes
 - This script is designed for chapter recordings with an audible pause between verses.
-- Silence detection parameters vary by recording. The script auto-tries multiple
-  thresholds, but you can override with --noise-db and --detect-d.
+- Silence detection parameters vary by recording. The script auto-tries multiple thresholds, but you can override with --noise-db and --detect-d.
+- Not that good with default parameters [see](avraham-shmuelof/out/exo-12-manifest.json) [three](dan-kaner/out/exo-12-manifest.json) [examples](dan-kaner-backgroundmusic/out/exo-12-manifest.json).
 
 ## Text source
-- By default we use the (deprecated but still widely supported) Sefaria Texts v1 endpoint:
-    https://www.sefaria.org/api/texts/{tref}?context=0&commentary=0&pad=0
-  (see Sefaria API docs for parameters).
+- By default we use the (deprecated but still widely supported) Sefaria Texts v1 endpoint: https://www.sefaria.org/api/texts/{tref}?context=0&commentary=0&pad=0 (see Sefaria API docs for parameters).
