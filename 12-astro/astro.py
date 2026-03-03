@@ -447,51 +447,93 @@ def write_perigees_csv(path: Path, rows: List[dict]) -> None:
             writer.writerow(row)
 
 
+def _phase_sort_key(event: dict) -> Tuple[int, int, int, int, int]:
+    """Return (year, month, day, hour, minute) for chronological sorting."""
+    y, m, d = event["date"]
+    h, mi = (int(x) for x in event["time"].split(":"))
+    return (y, m, d, h, mi)
+
+
+# Phase column order used for greedy row-building: NM < FQ < FM < LQ.
+_PHASE_ORDER = {"new": 0, "first": 1, "full": 2, "last": 3}
+
+
 def write_moonphases_csv(
     path: Path,
     phases_by_year: Dict[int, Dict[str, List[dict]]],
     solar_map: Dict[Tuple[int, int, int], str],
     lunar_map: Dict[Tuple[int, int, int], str],
 ) -> None:
+    # Flatten all phase events, tag each with its phase name, and sort
+    # chronologically so we can emit rows in true date order.
+    all_events: List[dict] = []
+    for year in range(YEAR_START, YEAR_END + 1):
+        y = phases_by_year.get(year, {"new": [], "first": [], "full": [], "last": []})
+        for phase_name in ("new", "first", "full", "last"):
+            for e in y.get(phase_name, []):
+                all_events.append({**e, "phase": phase_name})
+    all_events.sort(key=_phase_sort_key)
+
+    # Group events by year.
+    events_by_year: Dict[int, List[dict]] = defaultdict(list)
+    for e in all_events:
+        events_by_year[e["date"][0]].append(e)
+
+    # Build output rows using a greedy algorithm: walk each year's events
+    # in chronological order.  A new row starts whenever the next event's
+    # phase column isn't strictly after the last one placed on the current row.
+    output_rows: List[Dict[str, dict]] = []
+    for year in sorted(events_by_year):
+        current_row: Dict[str, dict] = {}
+        last_order = -1
+        for event in events_by_year[year]:
+            order = _PHASE_ORDER[event["phase"]]
+            if order > last_order:
+                current_row[event["phase"]] = event
+                last_order = order
+            else:
+                output_rows.append(current_row)
+                current_row = {event["phase"]: event}
+                last_order = order
+        if current_row:
+            output_rows.append(current_row)
+
+    # Strip leading zero from the hour portion of the time string.
+    def _fmt_time(t: str) -> str:
+        h, m = t.split(":")
+        return f"{int(h)}:{m}"
+
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["New Moon", "", "", "", "First Quarter", "", "", "", "Full Moon", "", "", "", "Last Quarter", ""])
         writer.writerow(["Date", "UTC", "Eclipse", "", "Date", "UTC", "", "", "Date", "UTC", "Eclipse", "", "Date", "UTC"])
 
-        for year in range(YEAR_START, YEAR_END + 1):
-            y = phases_by_year.get(year, {"new": [], "first": [], "full": [], "last": []})
-            n = y.get("new", [])
-            q1 = y.get("first", [])
-            full = y.get("full", [])
-            q3 = y.get("last", [])
+        for row_map in output_rows:
+            row = [""] * 14
 
-            row_count = max(len(n), len(q1), len(full), len(q3))
-            for i in range(row_count):
-                row = [""] * 14
+            if "new" in row_map:
+                e = row_map["new"]
+                row[0] = date_label(*e["date"])
+                row[1] = _fmt_time(e["time"])
+                row[2] = normalize_phase_eclipse("new", e["date"], e["raw_code"], solar_map, lunar_map)
 
-                if i < len(n):
-                    e = n[i]
-                    row[0] = date_label(*e["date"])
-                    row[1] = e["time"]
-                    row[2] = normalize_phase_eclipse("new", e["date"], e["raw_code"], solar_map, lunar_map)
+            if "first" in row_map:
+                e = row_map["first"]
+                row[4] = date_label(*e["date"])
+                row[5] = _fmt_time(e["time"])
 
-                if i < len(q1):
-                    e = q1[i]
-                    row[4] = date_label(*e["date"])
-                    row[5] = e["time"]
+            if "full" in row_map:
+                e = row_map["full"]
+                row[8] = date_label(*e["date"])
+                row[9] = _fmt_time(e["time"])
+                row[10] = normalize_phase_eclipse("full", e["date"], e["raw_code"], solar_map, lunar_map)
 
-                if i < len(full):
-                    e = full[i]
-                    row[8] = date_label(*e["date"])
-                    row[9] = e["time"]
-                    row[10] = normalize_phase_eclipse("full", e["date"], e["raw_code"], solar_map, lunar_map)
+            if "last" in row_map:
+                e = row_map["last"]
+                row[12] = date_label(*e["date"])
+                row[13] = _fmt_time(e["time"])
 
-                if i < len(q3):
-                    e = q3[i]
-                    row[12] = date_label(*e["date"])
-                    row[13] = e["time"]
-
-                writer.writerow(row)
+            writer.writerow(row)
 
 
 def calculate_planetary_events(ephemeris_path: Path) -> List[dict]:
