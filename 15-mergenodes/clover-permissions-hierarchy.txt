@@ -1,0 +1,114 @@
+all;All permissions
+	sandbox_unlimited_access;Unlimited access to sandboxes
+		sandbox_all;Sandboxes
+			sandbox_list;List sandbox
+			sandbox_create;Create sandbox
+			sandbox_delete;Delete sandbox
+			sandbox_edit;Edit sandbox
+			sandbox_zip_upload_delete_missing_files;May delete files missing in uploaded ZIP
+	libraries_administration;Libraries administration
+	scheduling_all;Scheduling
+		scheduling_list_unlimited;List schedule
+			scheduling_list_limited;List schedule limited
+		scheduling_create;Create schedule
+		scheduling_delete;Delete schedule
+		scheduling_edit;Edit schedule
+	event_listener_all;Event listeners
+		event_listener_list;List event listeners
+			jobflow_listener_list_unlimited;List jobflow event listeners - unlimited
+				jobflow_listener_list_limited;List jobflow event listeners - limited
+			graph_listener_list_unlimited;List graph event listeners - unlimited
+				graph_listener_list_limited;List graph event listeners - limited
+			file_listener_list_unlimited;List file event listeners - unlimited
+				file_listener_list_limited;List file event listeners - limited
+			jms_listener_list_unlimited;List JMS message listeners - unlimited
+				jms_listener_list_limited;List JMS message listeners - limited
+			kafka_listener_list_unlimited;List Kafka message listeners - unlimited
+				kafka_listener_list_limited;List Kafka message listeners - limited
+			groovy_listener_list_unlimited;List universal event listeners - unlimited
+				groovy_listener_list_limited;List universal event listeners - limited
+			task_listener_list_unlimited;List task event listeners - unlimited
+				task_listener_list_limited;List task event listeners - limited
+		event_listener_create;Create event listener
+			jobflow_listener_create;Create jobflow event listener
+			graph_listener_create;Create graph event listener
+			file_listener_create;Create file event listener
+			jms_listener_create;Create JMS message listener
+			kafka_listener_create;Create Kafka message listener
+			groovy_listener_create;Create universal event listener
+			task_listener_create;Create task event listener
+		event_listener_edit;Edit event listener
+			jobflow_listener_edit;Edit jobflow event listener
+			graph_listener_edit;Edit graph event listener
+			file_listener_edit;Edit file event listener
+			jms_listener_edit;Edit JMS message listener
+			kafka_listener_edit;Edit Kafka message listener
+			groovy_listener_edit;Edit universal event listener
+			task_listener_edit;Edit task event listener
+		event_listener_delete;Delete event listener
+			jobflow_listener_delete;Delete jobflow event listener
+			graph_listener_delete;Delete graph event listener
+			file_listener_delete;Delete file event listener
+			jms_listener_delete;Delete JMS message listener
+			kafka_listener_delete;Delete Kafka message listener
+			groovy_listener_delete;Delete universal event listener
+			task_listener_delete;Delete task event listener
+		manual_task_execution;Manual task execution
+	run_record_all;Unlimited access to execution history
+		run_record_list_unlimited;Unlimited access to execution history list
+			run_record_list_limited;Limited access to execution history list
+	view_debug_data;View edge debug data
+		data_service_all;Data service
+		data_service_list;List data services
+		data_service_change_status;Manage data services
+		data_service_execute;Execute and access documentation
+		data_service_https_connectors;Manage HTTPS connectors
+	data_sets_all;Data Manager
+		data_sets_server_admin;Manage Data Sets in Server Console
+		data_sets_manage;Create/Edit/Delete Data Sets in Data Manager
+			data_sets_access;Access to Data Manager UI
+	task_log_all;Tasks history
+	monitoring_all;Monitoring full access
+		monitoring_section;Monitoring UI
+		operations_dashboard_full_access;Operations dashboard write access
+			reset_error_state;Mark issues as resolved
+			operations_dashboard_read_only;List dashboards and monitors
+		suspend;Suspend
+			suspend_server;Suspend server
+			suspend_cluster_node;Suspend cluster node
+			suspend_sandbox;Suspend sandbox
+		reset_caches;Reset caches
+		running_jobs_list_unlimited;Running jobs unlimited
+			running_jobs_list_limited;Running jobs limited
+	configuration_all;Configuration
+		user_all;Users
+			user_list;List user
+			user_edit_password;Change passwords
+			user_edit;Edit user
+				user_edit_me;Edit own profile and password
+			user_unlock;Unlock user
+			user_delete;Delete user
+			user_create;Create user
+			user_assign_groups;Groups assignment
+		group_all;Groups
+			group_list;List groups
+			group_create;Create group
+			group_delete;Delete group
+			group_edit;Edit group
+			group_assign_users;Users assignment
+			group_assign_permission_rules;Permission assignment
+		secure_params_admin;Secure parameters administration
+			secure_params;Secure params
+		secret_managers_unlimited;Unlimited access to Secret Managers
+		info_sections;CloverDX/System info sections
+		clover_properties;CloverDX Server properties
+		license_reload;Reload license
+		license_upload;Upload license
+		server_config;Server configuration management
+			server_config_export;Export server configuration
+			server_config_import;Import server configuration
+		temp_space_management;Temp space management
+		setup;Server setup
+		heap_dump;Heap memory dump
+	open_server_console;Open Server Console
+	wrangler;Access to the Wrangler UI
